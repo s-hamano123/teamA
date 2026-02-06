@@ -118,6 +118,10 @@
 .expense-table button:hover {
   background-color: #d32f2f;
 }
+
+.delete-button-hidden {
+  visibility: hidden !important;
+}
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
