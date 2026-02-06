@@ -40,3 +40,81 @@
 .read-the-docs {
   color: #888;
 }
+
+.expense-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background-color: #fff;
+  color: #000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.expense-table thead {
+  background-color: #2196f3;
+  color: white;
+}
+
+.expense-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #ddd;
+}
+
+.expense-table th:last-child {
+  width: 80px;
+  text-align: center;
+}
+
+.expense-table td {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+}
+
+.expense-table td:last-child {
+  width: 80px;
+  text-align: center;
+  padding: 6px;
+}
+
+.expense-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.expense-table tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+.expense-table input,
+.expense-table select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.expense-table input:focus,
+.expense-table select:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.expense-table button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  width: auto;
+  min-width: 60px;
+}
+
+.expense-table button:hover {
+  background-color: #d32f2f;
+}
