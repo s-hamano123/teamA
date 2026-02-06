@@ -137,7 +137,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               <td>
                 <button 
                   onClick={() => handleDelete(expense.id)}
-                  className={index === 0 ? 'delete-button-hidden' : ''}
+                  style={{ visibility: index === 0 ? 'hidden' : 'visible' }}
                 >
                   削除
                 </button>

@@ -120,5 +120,5 @@
 }
 
 .delete-button-hidden {
-  visibility: hidden;
+  visibility: hidden !important;
 }
