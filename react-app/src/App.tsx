@@ -139,7 +139,9 @@ const handleDelete = (id: number) => {
           ))}
         </tbody>
       </table>
-      <button onClick={handleAdd}>追加</button>
+      <div className="add-button-container">
+        <button onClick={handleAdd}>追加</button>
+      </div>
     </div>
   )
 }

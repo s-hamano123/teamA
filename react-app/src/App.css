@@ -122,6 +122,12 @@
 .delete-button-hidden {
   visibility: hidden !important;
 }
+
+.add-button-container {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 20px;
+}
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
