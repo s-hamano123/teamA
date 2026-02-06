@@ -69,7 +69,7 @@ const handleDelete = (id: number) => {
         </label>
       </div>
 
-      <div>合計：¥1,200</div>
+      <div className="total-amount">合計：￥1,200</div>
       <table border={1} style={{ borderCollapse: "collapse", width: "100%" }}>
         <thead>
           <tr>
