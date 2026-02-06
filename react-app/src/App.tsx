@@ -125,11 +125,12 @@ const handleDelete = (id: number) => {
               </td>
 
               <td>
-                {index !== 0 && (
-                  <button onClick={() => handleDelete(expense.id)}>
-                    削除
-                  </button>
-                )}
+                <button 
+                  onClick={() => handleDelete(expense.id)}
+                  className={index === 0 ? 'delete-button-hidden' : ''}
+                >
+                  削除
+                </button>
               </td>
             </tr>
           ))}
