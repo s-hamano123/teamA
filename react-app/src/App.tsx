@@ -42,6 +42,12 @@ const handleAdd = () => {
 const handleDelete = (id: number) => {
   setExpenses((prev) => prev.filter((expense) => expense.id !== id));
 };
+const [value, setValue] = useState("");
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 入力値から半角数字以外を削除
+  const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+  setValue(onlyNumbers);
+};
 
   return (
     <div>
@@ -106,7 +112,11 @@ const handleDelete = (id: number) => {
               </td>
 
               <td>
-                <input type="text" />
+                <input
+                  type="text"
+                  value={value}
+                  onChange={handleChange}
+                />
               </td>
 
               <td>
