@@ -69,6 +69,11 @@ const handleTripTypeChange = (id: number, value: Expense['tripType']) => {
 };
 
 const formatAmount = (amount: number): string => {
+  return amount.toLocaleString('ja-JP');
+};
+
+// 金額入力フィールド用（0は空文字）
+const formatAmountInput = (amount: number): string => {
   return amount === 0 ? '' : amount.toLocaleString('ja-JP');
 };
 
@@ -104,7 +109,7 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
         </div>
       </div>
 
-      <div className="total-amount">金額：￥{formatAmount(totalAmount)}</div>
+      <div className="total-amount">合計金額：￥{formatAmount(totalAmount)}</div>
       <div className="table-wrapper">
         <table className="expense-table">
           <thead>
@@ -145,7 +150,7 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
                 <td>
                   <input 
                     type="text"
-                    value={formatAmount(expense.amount)}
+                    value={formatAmountInput(expense.amount)}
                     onChange={(e) => handleAmountChange(expense.id, e.target.value)}
                   />
                 </td>
