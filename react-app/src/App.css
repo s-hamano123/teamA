@@ -242,29 +242,48 @@ h1 {
 }
 
 .expense-table button {
-  background-color: #f44336;
+  background-color: #ff6b9d;
   color: white;
   border: none;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 14px;
   width: auto;
   min-width: 60px;
+  font-weight: 500;
+  box-shadow: 0 3px 6px rgba(244, 67, 54, 0.3);
+  transition: all 0.3s ease;
 }
 
 .expense-table button:hover {
-  background-color: #d32f2f;
+  background-color: #ff4081;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(244, 67, 54, 0.4);
+}
+
+.expense-table button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
 }
 
 .expense-table .add-button {
-  background-color: #2196f3;
+  background-color: #64b5f6;
   color: white;
   border: none;
+  box-shadow: 0 3px 6px rgba(33, 150, 243, 0.3);
+  transition: all 0.3s ease;
 }
 
 .expense-table .add-button:hover {
-  background-color: #1976d2;
+  background-color: #42a5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(33, 150, 243, 0.4);
+}
+
+.expense-table .add-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
 }
 
 .button-container {
@@ -318,35 +337,53 @@ h1 {
   width: 92px;
   min-width: 92px;
   padding: 8px 10px;
-  border-radius: 4px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.2;
   box-sizing: border-box;
+  box-shadow: 0 3px 6px rgba(158, 158, 158, 0.3);
+  transition: all 0.3s ease;
 }
 
 .clear-all-button:hover {
   background-color: #757575;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(117, 117, 117, 0.4);
+}
+
+.clear-all-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(158, 158, 158, 0.3);
 }
 
 .export-button {
-  background-color: #548235;
+  background-color: #66bb6a;
   color: white;
   border: none;
   width: 92px;
   min-width: 92px;
   padding: 8px 10px;
-  border-radius: 4px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.2;
   box-sizing: border-box;
+  box-shadow: 0 3px 6px rgba(84, 130, 53, 0.3);
+  transition: all 0.3s ease;
 }
 
 .export-button:hover {
-  background-color: #466d2a;
+  background-color: #4caf50;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(76, 175, 80, 0.4);
+}
+
+.export-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(84, 130, 53, 0.3);
 }
 
 .table-wrapper {

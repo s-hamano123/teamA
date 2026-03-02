@@ -91,21 +91,29 @@
 .dialog-button {
   padding: 10px 24px;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   min-width: 80px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .confirm-button {
-  background-color: #2196F3;
+  background-color: #64b5f6;
   color: white;
 }
 
 .confirm-button:hover {
-  background-color: #1976D2;
+  background-color: #42a5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(33, 150, 243, 0.4);
+}
+
+.confirm-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
 }
 
 .cancel-button {
@@ -115,6 +123,13 @@
 
 .cancel-button:hover {
   background-color: #e0e0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.cancel-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* スマホ対応 */
