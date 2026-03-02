@@ -59,14 +59,31 @@ const handleAmountChange = (id: number, value: string) => {
   }
 };
 
+// 区分変更を扱う
+const handleTripTypeChange = (id: number, value: Expense['tripType']) => {
+  setExpenses((prev) =>
+    prev.map((expense) =>
+      expense.id === id ? { ...expense, tripType: value } : expense
+    )
+  );
+};
+
 const formatAmount = (amount: number): string => {
   return amount === 0 ? '' : amount.toLocaleString('ja-JP');
+};
+
+// 合計を計算（片道はそのまま、往復は2倍）
+const getRowTotal = (expense: Expense): number => {
+  return expense.tripType === '往復' ? expense.amount * 2 : expense.amount;
 };
 
 const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
   const input = e.currentTarget as HTMLInputElement;
   input.showPicker?.();
 };
+
+  // 全体の合計を算出
+  const totalAmount = expenses.reduce((sum, e) => sum + getRowTotal(e), 0);
 
   return (
     <div>
@@ -87,7 +104,7 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
         </div>
       </div>
 
-      <div className="total-amount">金額：￥1,200</div>
+      <div className="total-amount">金額：￥{formatAmount(totalAmount)}</div>
       <div className="table-wrapper">
         <table className="expense-table">
           <thead>
@@ -134,14 +151,17 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
                 </td>
 
                 <td>
-                  <select>
+                  <select
+                    value={expense.tripType}
+                    onChange={(e) => handleTripTypeChange(expense.id, e.target.value as Expense['tripType'])}
+                  >
                     <option value="往復">往復</option>
                     <option value="片道">片道</option>
                   </select>
                 </td>
 
                 <td>
-                  ¥1,200
+                  ¥{formatAmount(getRowTotal(expense))}
                 </td>
 
                 <td>
