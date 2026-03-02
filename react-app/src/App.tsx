@@ -56,17 +56,17 @@ const handleDelete = (id: number) => {
       >
         {/* 左側：清算期間 */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>清算期間</span>
+          <span>清算期間：</span>
           <input type="date" />
           <span>〜</span>
           <input type="date" />
         </div>
 
         {/* 右側：氏名 */}
-        <label style={{ display: "flex", flexDirection: "column" }}>
-          氏名
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span>氏名：</span>
           <input type="text" />
-        </label>
+        </div>
       </div>
 
       <div className="total-amount">合計：￥1,200</div>
