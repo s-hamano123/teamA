@@ -63,16 +63,21 @@ const formatAmount = (amount: number): string => {
   return amount === 0 ? '' : amount.toLocaleString('ja-JP');
 };
 
+const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
+  const input = e.currentTarget as HTMLInputElement;
+  input.showPicker?.();
+};
+
   return (
     <div>
-      <h1>交通費精算システム</h1>
+      <h1>交通費精算</h1>
       <div className="header-container">
         {/* 左側：清算期間 */}
         <div className="form-group">
           <span>清算期間：</span>
-          <input type="date" />
+          <input type="date" onClick={handleDateInputClick} />
           <span>〜</span>
-          <input type="date" />
+          <input type="date" onClick={handleDateInputClick} />
         </div>
 
         {/* 右側：氏名 */}
@@ -82,7 +87,7 @@ const formatAmount = (amount: number): string => {
         </div>
       </div>
 
-      <div className="total-amount">合計：￥1,200</div>
+      <div className="total-amount">金額：￥1,200</div>
       <div className="table-wrapper">
         <table className="expense-table">
           <thead>
@@ -102,7 +107,7 @@ const formatAmount = (amount: number): string => {
             {expenses.map((expense, index) => (
               <tr key={expense.id}>
                 <td>
-                  <input type="date" />
+                  <input type="date" onClick={handleDateInputClick} />
                 </td>
 
                 <td>
