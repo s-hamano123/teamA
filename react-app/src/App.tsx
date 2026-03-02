@@ -14,19 +14,43 @@ type Expense = {
 };
 
 function App() {
-const [expenses, setExpenses] = useState<Expense[]>([
-  {
-    id: 1,
-    date: "",
-    paymentType: "ICチップ",
-    fromStation: "",
-    toStation: "",
-    amount: 0,
-    tripType: "片道",
-    Period: 1,
-    remark: "",
-  },
-]);
+  const [expenses, setExpenses] = useState<Expense[]>([
+    {
+      id: 1,
+      date: "",
+      paymentType: "ICチップ",
+      fromStation: "",
+      toStation: "",
+      amount: 0,
+      tripType: "片道",
+      Period: 1,
+      remark: "",
+    },
+  ]);
+
+  // ヘッダーの清算期間
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    if (value) {
+      const d = new Date(value);
+      // 月の最終日を取得
+      const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      const yyyy = last.getFullYear();
+      const mm = String(last.getMonth() + 1).padStart(2, "0");
+      const dd = String(last.getDate()).padStart(2, "0");
+      setEndDate(`${yyyy}-${mm}-${dd}`);
+    } else {
+      setEndDate("");
+    }
+  };
+
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+  };
+
 
 const handleAdd = () => {
   setExpenses((prev) => [
@@ -107,9 +131,19 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
         {/* 左側：清算期間 */}
         <div className="form-group">
           <span>清算期間：</span>
-          <input type="date" onClick={handleDateInputClick} />
+          <input
+            type="date"
+            value={startDate}
+            onChange={e => handleStartDateChange(e.target.value)}
+            onClick={handleDateInputClick}
+          />
           <span>〜</span>
-          <input type="date" onClick={handleDateInputClick} />
+          <input
+            type="date"
+            value={endDate}
+            onChange={e => handleEndDateChange(e.target.value)}
+            onClick={handleDateInputClick}
+          />
         </div>
 
         {/* 右側：氏名 */}
