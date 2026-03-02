@@ -1,17 +1,6 @@
 import { useState } from "react";
+import { exportToExcel, type Expense } from "./utils/exportUtils";
 import "./App.css";
-
-type Expense = {
-  id: number;
-  date: string;
-  paymentType: "ICチップ" | "切符";
-  fromStation: string;
-  toStation: string;
-  amount: number;
-  tripType: "片道" | "往復";
-  period: number;
-  remark: string;
-};
 
 function App() {
   const [expenses, setExpenses] = useState<Expense[]>([
@@ -44,19 +33,21 @@ function App() {
   const [endDate, setEndDate] = useState<string>(initialPeriod.end);
   const [name, setName] = useState<string>("");
 
+  const getMonthEndDateFromStart = (value: string): string => {
+    if (!value) {
+      return "";
+    }
+    const d = new Date(value);
+    const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    const yyyy = last.getFullYear();
+    const mm = String(last.getMonth() + 1).padStart(2, "0");
+    const dd = String(last.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const handleStartDateChange = (value: string) => {
     setStartDate(value);
-    if (value) {
-      const d = new Date(value);
-      // 月の最終日を取得
-      const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-      const yyyy = last.getFullYear();
-      const mm = String(last.getMonth() + 1).padStart(2, "0");
-      const dd = String(last.getDate()).padStart(2, "0");
-      setEndDate(`${yyyy}-${mm}-${dd}`);
-    } else {
-      setEndDate("");
-    }
+    setEndDate(getMonthEndDateFromStart(value));
   };
 
   const handleEndDateChange = (value: string) => {
@@ -91,8 +82,9 @@ const handleClearAll = () => {
     return;
   }
 
-  setStartDate("");
-  setEndDate("");
+  const period = getInitialPeriod();
+  setStartDate(period.start);
+  setEndDate(getMonthEndDateFromStart(period.start));
   setName("");
   setExpenses([
     {
@@ -107,6 +99,15 @@ const handleClearAll = () => {
       remark: "",
     },
   ]);
+};
+
+const handleExportConfirm = () => {
+  const shouldExport = window.confirm("精算書を出力します。よろしいですか？");
+  if (!shouldExport) {
+    return;
+  }
+
+  exportToExcel(expenses, startDate, endDate, name);
 };
 
 const handleAmountChange = (id: number, value: string) => {
@@ -173,9 +174,9 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
     <div>
       <h1>交通費精算</h1>
       <div className="header-container">
-        {/* 左側：清算期間 */}
+        {/* 左側：精算期間 */}
         <div className="form-group">
-          <span>清算期間：</span>
+          <span>精算期間：</span>
           <input
             type="date"
             value={startDate}
@@ -206,9 +207,14 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
         <div className="total-amount">
           合計金額：{totalAmount !== 0 ? `￥${formatAmount(totalAmount)}` : ""}
         </div>
-        <button className="clear-all-button" onClick={handleClearAll}>
-          クリア
-        </button>
+        <div className="button-group">
+          <button className="clear-all-button" onClick={handleClearAll}>
+            クリア
+          </button>
+          <button className="export-button" onClick={handleExportConfirm}>
+            精算書出力
+          </button>
+        </div>
       </div>
       <div className="table-wrapper">
         <table className="expense-table">
