@@ -70,7 +70,7 @@ const handleDelete = (id: number) => {
       </div>
 
       <div className="total-amount">合計：￥1,200</div>
-      <table border={1} style={{ borderCollapse: "collapse", width: "100%" }}>
+      <table className="expense-table">
         <thead>
           <tr>
             <th>日付</th>
@@ -129,7 +129,12 @@ const handleDelete = (id: number) => {
 
               <td>
                 {index === 0 ? (
-                  <button onClick={handleAdd}>追加</button>
+                  <button 
+                    onClick={handleAdd}
+                    style={{ backgroundColor: '#2196f3', color: 'white', border: 'none' }}
+                  >
+                    追加
+                  </button>
                 ) : (
                   <button onClick={() => handleDelete(expense.id)}>削除</button>
                 )}
