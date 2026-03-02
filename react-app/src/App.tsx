@@ -9,7 +9,7 @@ type Expense = {
   toStation: string;
   amount: number;
   tripType: "片道" | "往復";
-  Period: number;
+  period: number;
   remark: string;
 };
 
@@ -23,14 +23,25 @@ function App() {
       toStation: "",
       amount: 0,
       tripType: "片道",
-      Period: 1,
+      period: 1,
       remark: "",
     },
   ]);
 
   // ヘッダーの清算期間
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  // 初期値：当月1日と最終日
+  const getInitialPeriod = (): { start: string; end: string } => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const start = `${yyyy}-${mm}-01`;
+    const lastDay = new Date(yyyy, now.getMonth() + 1, 0).getDate();
+    const end = `${yyyy}-${mm}-${String(lastDay).padStart(2, "0")}`;
+    return { start, end };
+  };
+  const initialPeriod = getInitialPeriod();
+  const [startDate, setStartDate] = useState<string>(initialPeriod.start);
+  const [endDate, setEndDate] = useState<string>(initialPeriod.end);
   const [name, setName] = useState<string>("");
 
   const handleStartDateChange = (value: string) => {
@@ -64,7 +75,7 @@ const handleAdd = () => {
       toStation: "",
       amount: 0,
       tripType: "片道",
-      Period: 1,
+      period: 1,
       remark: "",
     },
   ]);
@@ -92,7 +103,7 @@ const handleClearAll = () => {
       toStation: "",
       amount: 0,
       tripType: "片道",
-      Period: 1,
+      period: 1,
       remark: "",
     },
   ]);
@@ -130,7 +141,7 @@ const handlePeriodChange = (id: number, value: string) => {
   const num = value === '' ? 0 : Number(value);
   setExpenses((prev) =>
     prev.map((expense) =>
-      expense.id === id ? { ...expense, Period: num } : expense
+      expense.id === id ? { ...expense, period: num } : expense
     )
   );
 };
@@ -146,7 +157,7 @@ const formatAmountInput = (amount: number): string => {
 
 // 合計を計算（期間も掛け、片道はそのまま、往復は2倍）
 const getRowTotal = (expense: Expense): number => {
-  const base = expense.amount * expense.Period;
+  const base = expense.amount * expense.period;
   return expense.tripType === '往復' ? base * 2 : base;
 };
 
@@ -312,7 +323,7 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={3}
-                    value={expense.Period === 0 ? '' : expense.Period}
+                    value={expense.period === 0 ? '' : expense.period}
                     onChange={(e) => handlePeriodChange(expense.id, e.target.value)}
                     style={{ width: '3rem' }}
                   />
