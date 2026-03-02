@@ -81,12 +81,26 @@ h1 {
   margin-left: 50px;
 }
 
+.header-container input[type="date"],
+.header-container input[type="text"] {
+  border-radius: 6px;
+  border: 1px solid #548235;
+  padding: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
 .form-group {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: nowrap;
   white-space: nowrap;
+}
+
+.form-group > span {
+  color: #548235;
+  font-weight: 500;
 }
 
 .expense-table {
@@ -291,10 +305,15 @@ h1 {
   background-color: #9e9e9e;
   color: white;
   border: none;
-  padding: 8px 14px;
+  width: 92px;
+  min-width: 92px;
+  padding: 8px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .clear-all-button:hover {
