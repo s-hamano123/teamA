@@ -47,15 +47,9 @@ const handleDelete = (id: number) => {
   return (
     <div>
       <h1>交通費精算システム</h1>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+      <div className="header-container">
         {/* 左側：清算期間 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="form-group">
           <span>清算期間：</span>
           <input type="date" />
           <span>〜</span>
@@ -63,7 +57,7 @@ const handleDelete = (id: number) => {
         </div>
 
         {/* 右側：氏名 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="form-group">
           <span>氏名：</span>
           <input type="text" />
         </div>
@@ -129,10 +123,7 @@ const handleDelete = (id: number) => {
 
               <td>
                 {index === 0 ? (
-                  <button 
-                    onClick={handleAdd}
-                    style={{ backgroundColor: '#2196f3', color: 'white', border: 'none' }}
-                  >
+                  <button className="add-button" onClick={handleAdd}>
                     追加
                   </button>
                 ) : (

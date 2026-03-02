@@ -41,6 +41,18 @@
   color: #888;
 }
 
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .expense-table {
   width: 100%;
   border-collapse: separate;
@@ -130,6 +142,16 @@
 
 .expense-table button:hover {
   background-color: #d32f2f;
+}
+
+.expense-table .add-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+}
+
+.expense-table .add-button:hover {
+  background-color: #1976d2;
 }
 
 .delete-button-hidden {
