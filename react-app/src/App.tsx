@@ -128,20 +128,16 @@ const handleDelete = (id: number) => {
               </td>
 
               <td>
-                <button 
-                  onClick={() => handleDelete(expense.id)}
-                  style={{ visibility: index === 0 ? 'hidden' : 'visible' }}
-                >
-                  削除
-                </button>
+                {index === 0 ? (
+                  <button onClick={handleAdd}>追加</button>
+                ) : (
+                  <button onClick={() => handleDelete(expense.id)}>削除</button>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="add-button-container">
-        <button onClick={handleAdd}>追加</button>
-      </div>
     </div>
   )
 }
