@@ -145,7 +145,9 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
       </div>
 
       <div className="amount-and-clear-container">
-        <div className="total-amount">合計金額：￥{formatAmount(totalAmount)}</div>
+        <div className="total-amount">
+          合計金額：{totalAmount !== 0 ? `￥${formatAmount(totalAmount)}` : ""}
+        </div>
         <button className="clear-all-button" onClick={handleClearAll}>
           クリア
         </button>
@@ -270,7 +272,9 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
                 </td>
 
                 <td>
-                  ¥{formatAmount(getRowTotal(expense))}
+                  {getRowTotal(expense) !== 0
+                    ? `￥${formatAmount(getRowTotal(expense))}`
+                    : ""}
                 </td>
 
                 <td>
