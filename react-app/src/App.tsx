@@ -25,6 +25,7 @@ const [expenses, setExpenses] = useState<Expense[]>([
     remark: "",
   },
 ]);
+
 const handleAdd = () => {
   setExpenses((prev) => [
     ...prev,
@@ -40,8 +41,26 @@ const handleAdd = () => {
     },
   ]);
 };
+
 const handleDelete = (id: number) => {
   setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+};
+
+const handleAmountChange = (id: number, value: string) => {
+  // カンマを除去して数値化
+  const cleanValue = value.replace(/,/g, '');
+  if (cleanValue === '' || (!isNaN(Number(cleanValue)) && cleanValue.length <= 10)) {
+    const numValue = cleanValue === '' ? 0 : Number(cleanValue);
+    setExpenses((prev) =>
+      prev.map((expense) =>
+        expense.id === id ? { ...expense, amount: numValue } : expense
+      )
+    );
+  }
+};
+
+const formatAmount = (amount: number): string => {
+  return amount === 0 ? '' : amount.toLocaleString('ja-JP');
 };
 
   return (
@@ -64,76 +83,80 @@ const handleDelete = (id: number) => {
       </div>
 
       <div className="total-amount">合計：￥1,200</div>
-      <table className="expense-table">
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>支払先</th>
-            <th>乗車駅</th>
-            <th>降車駅</th>
-            <th>金額</th>
-            <th>区分</th>
-            <th>合計</th>
-            <th>備考</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {expenses.map((expense, index) => (
-            <tr key={expense.id}>
-              <td>
-                <input type="date" />
-              </td>
-
-              <td>
-                <select>
-                  <option value="ICチップ">ICチップ</option>
-                  <option value="切符">切符</option>
-                </select>
-              </td>
-
-              <td>
-                <input type="text" />
-              </td>
-
-              <td>
-                <input type="text" />
-              </td>
-
-              <td>
-                <input
-                  type="number"
-                />
-              </td>
-
-              <td>
-                <select>
-                  <option value="往復">往復</option>
-                  <option value="片道">片道</option>
-                </select>
-              </td>
-
-              <td>
-                ¥1,200
-              </td>
-
-              <td>
-                <input type="text" />
-              </td>
-
-              <td>
-                {index === 0 ? (
-                  <button className="add-button" onClick={handleAdd}>
-                    追加
-                  </button>
-                ) : (
-                  <button onClick={() => handleDelete(expense.id)}>削除</button>
-                )}
-              </td>
+      <div className="table-wrapper">
+        <table className="expense-table">
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>支払先</th>
+              <th>乗車駅</th>
+              <th>降車駅</th>
+              <th>金額</th>
+              <th>区分</th>
+              <th>合計</th>
+              <th>備考</th>
+              <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {expenses.map((expense, index) => (
+              <tr key={expense.id}>
+                <td>
+                  <input type="date" />
+                </td>
+
+                <td>
+                  <select>
+                    <option value="ICチップ">ICチップ</option>
+                    <option value="切符">切符</option>
+                  </select>
+                </td>
+
+                <td>
+                  <input type="text" />
+                </td>
+
+                <td>
+                  <input type="text" />
+                </td>
+
+                <td>
+                  <input 
+                    type="text"
+                    value={formatAmount(expense.amount)}
+                    onChange={(e) => handleAmountChange(expense.id, e.target.value)}
+                  />
+                </td>
+
+                <td>
+                  <select>
+                    <option value="往復">往復</option>
+                    <option value="片道">片道</option>
+                  </select>
+                </td>
+
+                <td>
+                  ¥1,200
+                </td>
+
+                <td>
+                  <input type="text" />
+                </td>
+
+                <td>
+                  {index === 0 ? (
+                    <button className="add-button" onClick={handleAdd}>
+                      追加
+                    </button>
+                  ) : (
+                    <button onClick={() => handleDelete(expense.id)}>削除</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
