@@ -49,7 +49,7 @@ const handleDelete = (id: number) => {
 const handleAmountChange = (id: number, value: string) => {
   // カンマを除去して数値化
   const cleanValue = value.replace(/,/g, '');
-  if (cleanValue === '' || (!isNaN(Number(cleanValue)) && cleanValue.length <= 10)) {
+  if (cleanValue === '' || (!isNaN(Number(cleanValue)) && cleanValue.length <= 9)) {
     const numValue = cleanValue === '' ? 0 : Number(cleanValue);
     setExpenses((prev) =>
       prev.map((expense) =>

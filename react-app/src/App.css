@@ -98,6 +98,13 @@
   min-width: 90px;
 }
 
+/* 金額列 */
+.expense-table th:nth-child(5),
+.expense-table td:nth-child(5) {
+  width: 90px;
+  min-width: 90px;
+}
+
 /* 区分列 */
 .expense-table th:nth-child(6),
 .expense-table td:nth-child(6) {
