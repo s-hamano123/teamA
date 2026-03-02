@@ -31,6 +31,7 @@ function App() {
   // ヘッダーの清算期間
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [name, setName] = useState<string>("");
 
   const handleStartDateChange = (value: string) => {
     setStartDate(value);
@@ -73,6 +74,30 @@ const handleDelete = (id: number) => {
   setExpenses((prev) => prev.filter((expense) => expense.id !== id));
 };
 
+const handleClearAll = () => {
+  const shouldClear = window.confirm("全ての入力内容をクリアします。よろしいですか？");
+  if (!shouldClear) {
+    return;
+  }
+
+  setStartDate("");
+  setEndDate("");
+  setName("");
+  setExpenses([
+    {
+      id: 1,
+      date: "",
+      paymentType: "ICチップ",
+      fromStation: "",
+      toStation: "",
+      amount: 0,
+      tripType: "片道",
+      Period: 1,
+      remark: "",
+    },
+  ]);
+};
+
 const handleAmountChange = (id: number, value: string) => {
   // カンマを除去して数値化
   const cleanValue = value.replace(/,/g, '');
@@ -97,7 +122,11 @@ const handleTripTypeChange = (id: number, value: Expense['tripType']) => {
 
 // 期間変更を扱う
 const handlePeriodChange = (id: number, value: string) => {
-  // 数値以外（空文字など）は0にする
+  // 3桁までの数値のみ許可
+  if (!/^\d{0,3}$/.test(value)) {
+    return;
+  }
+
   const num = value === '' ? 0 : Number(value);
   setExpenses((prev) =>
     prev.map((expense) =>
@@ -107,6 +136,11 @@ const handlePeriodChange = (id: number, value: string) => {
 };
 
 const formatAmount = (amount: number): string => {
+  return amount.toLocaleString('ja-JP');
+};
+
+// 金額入力フィールド用（0は空文字）
+const formatAmountInput = (amount: number): string => {
   return amount === 0 ? '' : amount.toLocaleString('ja-JP');
 };
 
@@ -149,11 +183,22 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
         {/* 右側：氏名 */}
         <div className="form-group">
           <span>氏名：</span>
-          <input type="text" />
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </div>
       </div>
 
-      <div className="total-amount">金額：￥{formatAmount(totalAmount)}</div>
+      <div className="amount-and-clear-container">
+        <div className="total-amount">
+          合計金額：{totalAmount !== 0 ? `￥${formatAmount(totalAmount)}` : ""}
+        </div>
+        <button className="clear-all-button" onClick={handleClearAll}>
+          クリア
+        </button>
+      </div>
       <div className="table-wrapper">
         <table className="expense-table">
           <thead>
@@ -174,28 +219,79 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
             {expenses.map((expense, index) => (
               <tr key={expense.id}>
                 <td>
-                  <input type="date" onClick={handleDateInputClick} />
+                  <input
+                    type="date"
+                    value={expense.date}
+                    onChange={(e) =>
+                      setExpenses((prev) =>
+                        prev.map((item) =>
+                          item.id === expense.id
+                            ? { ...item, date: e.target.value }
+                            : item
+                        )
+                      )
+                    }
+                    onClick={handleDateInputClick}
+                  />
                 </td>
 
                 <td>
-                  <select>
+                  <select
+                    value={expense.paymentType}
+                    onChange={(e) =>
+                      setExpenses((prev) =>
+                        prev.map((item) =>
+                          item.id === expense.id
+                            ? {
+                                ...item,
+                                paymentType: e.target.value as Expense["paymentType"],
+                              }
+                            : item
+                        )
+                      )
+                    }
+                  >
                     <option value="ICチップ">ICチップ</option>
                     <option value="切符">切符</option>
                   </select>
                 </td>
 
                 <td>
-                  <input type="text" />
+                  <input
+                    type="text"
+                    value={expense.fromStation}
+                    onChange={(e) =>
+                      setExpenses((prev) =>
+                        prev.map((item) =>
+                          item.id === expense.id
+                            ? { ...item, fromStation: e.target.value }
+                            : item
+                        )
+                      )
+                    }
+                  />
                 </td>
 
                 <td>
-                  <input type="text" />
+                  <input
+                    type="text"
+                    value={expense.toStation}
+                    onChange={(e) =>
+                      setExpenses((prev) =>
+                        prev.map((item) =>
+                          item.id === expense.id
+                            ? { ...item, toStation: e.target.value }
+                            : item
+                        )
+                      )
+                    }
+                  />
                 </td>
 
                 <td>
                   <input 
                     type="text"
-                    value={formatAmount(expense.amount)}
+                    value={formatAmountInput(expense.amount)}
                     onChange={(e) => handleAmountChange(expense.id, e.target.value)}
                   />
                 </td>
@@ -212,30 +308,48 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
 
                 <td>
                   <input
-                    type="number"
-                    min="1"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={3}
                     value={expense.Period === 0 ? '' : expense.Period}
                     onChange={(e) => handlePeriodChange(expense.id, e.target.value)}
-                    style={{ width: '4rem' }}
+                    style={{ width: '3rem' }}
                   />
                 </td>
 
                 <td>
-                  ¥{formatAmount(getRowTotal(expense))}
+                  {getRowTotal(expense) !== 0
+                    ? `￥${formatAmount(getRowTotal(expense))}`
+                    : ""}
                 </td>
 
                 <td>
-                  <input type="text" />
+                  <input
+                    type="text"
+                    value={expense.remark}
+                    onChange={(e) =>
+                      setExpenses((prev) =>
+                        prev.map((item) =>
+                          item.id === expense.id
+                            ? { ...item, remark: e.target.value }
+                            : item
+                        )
+                      )
+                    }
+                  />
                 </td>
 
                 <td>
-                  {index === 0 ? (
-                    <button className="add-button" onClick={handleAdd}>
-                      追加
-                    </button>
-                  ) : (
-                    <button onClick={() => handleDelete(expense.id)}>削除</button>
-                  )}
+                  <div className="button-container">
+                    {index === 0 ? (
+                      <button className="add-button" onClick={handleAdd}>
+                        追加
+                      </button>
+                    ) : (
+                      <button onClick={() => handleDelete(expense.id)}>削除</button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
