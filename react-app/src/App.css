@@ -7,12 +7,15 @@
   box-sizing: border-box;
   background-color: #e8f5e8;
   min-height: 100vh;
+  color: #2d5a1f;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
 }
 
 body {
   background-color: #e8f5e8;
   margin: 0;
   padding: 0;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
 }
 
 .logo {
@@ -88,6 +91,7 @@ h1 {
   padding: 6px;
   font-size: 14px;
   box-sizing: border-box;
+  color: #2d5a1f;
 }
 
 .form-group {
@@ -99,7 +103,7 @@ h1 {
 }
 
 .form-group > span {
-  color: #548235;
+  color: #2d5a1f;
   font-weight: 500;
 }
 
@@ -110,7 +114,7 @@ h1 {
   border-spacing: 0;
   margin: 20px 0;
   background-color: #fff;
-  color: #000;
+  color: #2d5a1f;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
@@ -209,7 +213,7 @@ h1 {
   font-size: 14px;
   box-sizing: border-box;
   background-color: white;
-  color: #333;
+  color: #2d5a1f;
 }
 
 .expense-table td:nth-child(5) input {
@@ -227,7 +231,7 @@ h1 {
 .expense-table option {
   padding: 8px;
   background-color: white;
-  color: #333;
+  color: #2d5a1f;
 }
 
 .expense-table input:focus,

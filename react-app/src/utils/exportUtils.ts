@@ -99,12 +99,17 @@ export const exportToExcel = async (
       font: { bold: true, sz: 16 },
       alignment: { horizontal: "center", vertical: "center" },
       fill: { patternType: "solid", fgColor: { rgb: "80BB50" } },
-      border: borderStyle,
     };
   }
 
   // タイトル行のセル結合 (A1:I1)
   ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
+
+  // A2行（空行）のスタイル設定 - 罫線なし
+  const a2Cells = ["A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2"];
+  a2Cells.forEach((cell) => {
+    ensureStyledCell(ws, cell, {});
+  });
 
   // 精算期間と氏名のスタイル
   ["A3", "A4"].forEach((cell) => {
