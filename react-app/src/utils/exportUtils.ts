@@ -177,10 +177,11 @@ export const exportToExcel = (
   // ワークシートをワークブックに追加
   XLSX.utils.book_append_sheet(wb, ws, "交通費精算");
 
-  // ファイル名を作成
-  const fileName = `交通費精算_${
-    name || "未記入"
-  }_${new Date().toISOString().split("T")[0]}.xlsx`;
+  // ファイル名を作成（YYYY年MM月 会計報告書_氏名）
+  const date = new Date(fromDate);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const fileName = `${year}年${month}月 会計報告書_${name || "未記入"}.xlsx`;
 
   // ファイルを出力
   XLSX.writeFile(wb, fileName);
