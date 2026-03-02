@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { exportToExcel, type Expense } from "./utils/exportUtils";
+import { Dialog } from "./components/Dialog";
 import "./App.css";
 
 function App() {
@@ -16,6 +17,21 @@ function App() {
       remark: "",
     },
   ]);
+
+  // ダイアログの状態管理
+  const [dialog, setDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "confirm" | "alert";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "alert",
+    onConfirm: () => {},
+  });
 
   // ヘッダーの清算期間
   // 初期値：当月1日と最終日
@@ -77,37 +93,58 @@ const handleDelete = (id: number) => {
 };
 
 const handleClearAll = () => {
-  const shouldClear = window.confirm("全ての入力内容をクリアします。よろしいですか？");
-  if (!shouldClear) {
-    return;
-  }
-
-  const period = getInitialPeriod();
-  setStartDate(period.start);
-  setEndDate(getMonthEndDateFromStart(period.start));
-  setName("");
-  setExpenses([
-    {
-      id: 1,
-      date: "",
-      paymentType: "ICチップ",
-      fromStation: "",
-      toStation: "",
-      amount: 0,
-      tripType: "片道",
-      period: 1,
-      remark: "",
+  setDialog({
+    isOpen: true,
+    title: "確認",
+    message: "全ての入力内容をクリアします。よろしいですか？",
+    type: "confirm",
+    onConfirm: () => {
+      const period = getInitialPeriod();
+      setStartDate(period.start);
+      setEndDate(getMonthEndDateFromStart(period.start));
+      setName("");
+      setExpenses([
+        {
+          id: 1,
+          date: "",
+          paymentType: "ICチップ",
+          fromStation: "",
+          toStation: "",
+          amount: 0,
+          tripType: "片道",
+          period: 1,
+          remark: "",
+        },
+      ]);
+      setDialog((prev) => ({ ...prev, isOpen: false }));
     },
-  ]);
+  });
 };
 
 const handleExportConfirm = () => {
-  const shouldExport = window.confirm("精算書を出力します。よろしいですか？");
-  if (!shouldExport) {
+  if (!name.trim()) {
+    setDialog({
+      isOpen: true,
+      title: "入力エラー",
+      message: "氏名を入力してください。",
+      type: "alert",
+      onConfirm: () => {
+        setDialog((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
     return;
   }
 
-  exportToExcel(expenses, startDate, endDate, name);
+  setDialog({
+    isOpen: true,
+    title: "確認",
+    message: "精算書を出力します。よろしいですか？",
+    type: "confirm",
+    onConfirm: async () => {
+      await exportToExcel(expenses, startDate, endDate, name);
+      setDialog((prev) => ({ ...prev, isOpen: false }));
+    },
+  });
 };
 
 const handleAmountChange = (id: number, value: string) => {
@@ -373,6 +410,15 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
           </tbody>
         </table>
       </div>
+
+      <Dialog
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        onConfirm={dialog.onConfirm}
+        onCancel={() => setDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   )
 }

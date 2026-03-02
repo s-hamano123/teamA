@@ -36,12 +36,12 @@ const ensureStyledCell = (
   ws[cellAddress].s = style;
 };
 
-export const exportToExcel = (
+export const exportToExcel = async (
   expenses: Expense[],
   fromDate: string,
   toDate: string,
   name: string
-): void => {
+): Promise<void> => {
   // ワークブックを作成
   const wb = XLSX.utils.book_new();
 
@@ -183,6 +183,29 @@ export const exportToExcel = (
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const fileName = `${year}年${month}月 会計報告書_${name || "未記入"}.xlsx`;
 
-  // ファイルを出力
-  XLSX.writeFile(wb, fileName);
+  // ファイルを出力（保存先を選択）
+  try {
+    // File System Access API をサポートしている場合
+    if ("showSaveFilePicker" in window) {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: fileName,
+        types: [
+          {
+            description: "Excel ファイル",
+            accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] },
+          },
+        ],
+      });
+      const writable = await handle.createWritable();
+      const buffer = XLSX.write(wb, { bookType: "xlsx", type: "buffer" });
+      await writable.write(buffer);
+      await writable.close();
+    } else {
+      // フォールバック: 通常のダウンロード
+      XLSX.writeFile(wb, fileName);
+    }
+  } catch (error) {
+    // ユーザーがキャンセルした場合など
+    console.log("ファイル保存がキャンセルされました");
+  }
 };
