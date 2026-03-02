@@ -9,6 +9,7 @@ type Expense = {
   toStation: string;
   amount: number;
   tripType: "片道" | "往復";
+  Period: number;
   remark: string;
 };
 
@@ -22,6 +23,7 @@ const [expenses, setExpenses] = useState<Expense[]>([
     toStation: "",
     amount: 0,
     tripType: "片道",
+    Period: 1,
     remark: "",
   },
 ]);
@@ -37,6 +39,7 @@ const handleAdd = () => {
       toStation: "",
       amount: 0,
       tripType: "片道",
+      Period: 1,
       remark: "",
     },
   ]);
@@ -68,13 +71,25 @@ const handleTripTypeChange = (id: number, value: Expense['tripType']) => {
   );
 };
 
+// 期間変更を扱う
+const handlePeriodChange = (id: number, value: string) => {
+  // 数値以外（空文字など）は0にする
+  const num = value === '' ? 0 : Number(value);
+  setExpenses((prev) =>
+    prev.map((expense) =>
+      expense.id === id ? { ...expense, Period: num } : expense
+    )
+  );
+};
+
 const formatAmount = (amount: number): string => {
   return amount === 0 ? '' : amount.toLocaleString('ja-JP');
 };
 
-// 合計を計算（片道はそのまま、往復は2倍）
+// 合計を計算（期間も掛け、片道はそのまま、往復は2倍）
 const getRowTotal = (expense: Expense): number => {
-  return expense.tripType === '往復' ? expense.amount * 2 : expense.amount;
+  const base = expense.amount * expense.Period;
+  return expense.tripType === '往復' ? base * 2 : base;
 };
 
 const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
@@ -115,6 +130,7 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
               <th>降車駅</th>
               <th>金額</th>
               <th>区分</th>
+              <th>日数</th>
               <th>合計</th>
               <th>備考</th>
               <th></th>
@@ -158,6 +174,16 @@ const handleDateInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
                     <option value="往復">往復</option>
                     <option value="片道">片道</option>
                   </select>
+                </td>
+
+                <td>
+                  <input
+                    type="number"
+                    min="1"
+                    value={expense.Period === 0 ? '' : expense.Period}
+                    onChange={(e) => handlePeriodChange(expense.id, e.target.value)}
+                    style={{ width: '4rem' }}
+                  />
                 </td>
 
                 <td>
