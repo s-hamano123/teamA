@@ -1,3 +1,9 @@
+/*
+  交通費精算画面のメインスタイルです。
+  ヘッダー、テーブル、操作ボタン、レスポンシブ表示をまとめています。
+*/
+
+/* 画面全体の土台 */
 #root {
   max-width: 1600px;
   margin: 0 auto;
@@ -18,45 +24,11 @@ body {
   font-family: 'M PLUS Rounded 1c', sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
+/* 画面タイトル */
 h1 {
-  background-color: #80BB50;
+  background-color: #548235;
   color: white;
+  border: 2px solid #ffffff;
   padding: 20px;
   margin: -2rem 0 2rem 0;
   border-radius: 8px;
@@ -107,6 +79,7 @@ h1 {
   font-weight: 500;
 }
 
+/* 明細テーブル */
 .expense-table {
   width: 100%;
   min-width: 700px;
@@ -118,11 +91,11 @@ h1 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid #548235;
+  border: 2px solid #2d5a1f;
 }
 
 .expense-table thead {
-  background-color: #80BB50;
+  background-color: #548235;
   color: white;
 }
 
@@ -130,8 +103,8 @@ h1 {
   padding: 12px;
   text-align: center;
   font-weight: 600;
-  border-right: 2px solid #548235;
-  border-bottom: 2px solid #548235;
+  border-right: 2px solid #2d5a1f;
+  border-bottom: 2px solid #2d5a1f;
 }
 
 .expense-table th:last-child {
@@ -178,8 +151,8 @@ h1 {
 
 .expense-table td {
   padding: 10px 12px;
-  border-right: 2px solid #548235;
-  border-bottom: 2px solid #548235;
+  border-right: 2px solid #2d5a1f;
+  border-bottom: 2px solid #2d5a1f;
   overflow: hidden;
 }
 
@@ -300,16 +273,6 @@ h1 {
   font-size: 13px;
 }
 
-.delete-button-hidden {
-  visibility: hidden !important;
-}
-
-.add-button-container {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 20px;
-}
-
 .total-amount {
   text-align: left;
   margin: 0;
@@ -386,6 +349,7 @@ h1 {
   box-shadow: 0 2px 4px rgba(84, 130, 53, 0.3);
 }
 
+/* 横スクロール対応 */
 .table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -406,7 +370,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
 }
 
-/* スマホ対応 */
+/* スマホ表示の調整 */
 @media (max-width: 768px) {
   #root {
     padding: 1rem;

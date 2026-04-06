@@ -1,5 +1,8 @@
-import "./Dialog.css";
+import "../styles/dialog.css";
 
+/**
+ * ダイアログに渡す値です。
+ */
 type DialogProps = {
   isOpen: boolean;
   title: string;
@@ -9,6 +12,9 @@ type DialogProps = {
   onCancel?: () => void;
 };
 
+/**
+ * 画面に確認/警告ダイアログを表示する共通コンポーネントです。
+ */
 export const Dialog = ({
   isOpen,
   title,
@@ -19,10 +25,12 @@ export const Dialog = ({
 }: DialogProps) => {
   if (!isOpen) return null;
 
+  // OKボタン押下時の処理を呼び出す
   const handleConfirm = () => {
     onConfirm();
   };
 
+  // キャンセル押下時にキャンセル処理があれば実行する
   const handleCancel = () => {
     if (onCancel) {
       onCancel();

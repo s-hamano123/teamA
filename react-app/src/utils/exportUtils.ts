@@ -1,5 +1,9 @@
 import * as XLSX from "xlsx-js-style";
 
+/**
+ * 交通費データを Excel 形式で出力するためのユーティリティです。
+ */
+
 export type Expense = {
   id: number;
   date: string;
@@ -12,12 +16,13 @@ export type Expense = {
   remark: string;
 };
 
+// 1行分の合計を計算（往復は2倍）
 const getRowTotal = (expense: Expense): number => {
   const base = expense.amount * expense.period;
   return expense.tripType === "往復" ? base * 2 : base;
 };
 
-// 共通の罫線スタイル
+// どのセルにも使う共通の罫線スタイル
 const borderStyle = {
   top: { style: "thin", color: { rgb: "000000" } },
   bottom: { style: "thin", color: { rgb: "000000" } },
@@ -30,12 +35,16 @@ const ensureStyledCell = (
   cellAddress: string,
   style: Record<string, unknown>
 ) => {
+  // セルが未作成なら空セルを先に作る
   if (!ws[cellAddress]) {
     ws[cellAddress] = { t: "s", v: "" } as XLSX.CellObject;
   }
   ws[cellAddress].s = style;
 };
 
+/**
+ * 入力された明細を Excel ファイルとして保存します。
+ */
 export const exportToExcel = async (
   expenses: Expense[],
   fromDate: string,

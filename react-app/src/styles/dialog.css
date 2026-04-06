@@ -1,3 +1,9 @@
+/*
+  共通ダイアログのスタイルです。
+  オーバーレイ、本文、ボタン、スマホ時の表示をまとめています。
+*/
+
+/* 背景オーバーレイ */
 .dialog-overlay {
   position: fixed;
   top: 0;
@@ -11,6 +17,7 @@
   z-index: 9999;
 }
 
+/* ダイアログ本体 */
 .dialog-content {
   background-color: white;
   border-radius: 8px;
@@ -21,6 +28,7 @@
   font-family: 'M PLUS Rounded 1c', sans-serif;
 }
 
+/* 表示アニメーション */
 @keyframes dialog-fade-in {
   from {
     opacity: 0;
@@ -32,6 +40,7 @@
   }
 }
 
+/* ヘッダー領域 */
 .dialog-header {
   padding: 14px 20px 12px;
   border-bottom: 1px solid #e0e0e0;
@@ -61,6 +70,7 @@
   color: white;
 }
 
+/* 本文領域 */
 .dialog-body {
   padding: 24px;
 }
@@ -88,6 +98,7 @@
   border-top: 1px solid #e0e0e0;
 }
 
+/* ボタン共通 */
 .dialog-button {
   padding: 10px 24px;
   border: none;
@@ -132,7 +143,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-/* スマホ対応 */
+/* スマホ表示の調整 */
 @media (max-width: 768px) {
   .dialog-content {
     min-width: 90%;
