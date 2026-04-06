@@ -1,11 +1,11 @@
 import type { MouseEvent } from "react";
 
 /**
- * 精算期間と氏名を入力するヘッダー部分のファイルです。
+ * 精算期間と氏名を入力するヘッダー部分のファイル
  */
 
 /**
- * ヘッダーに渡す値とイベントです。
+ * ヘッダーに渡す値とイベント
  */
 type SettlementHeaderProps = {
   startDate: string;
@@ -18,7 +18,7 @@ type SettlementHeaderProps = {
 };
 
 /**
- * 画面上部の入力欄（期間・氏名）を表示します。
+ * 画面上部の入力欄（期間・氏名）を表示
  */
 export const SettlementHeader = ({
   startDate,

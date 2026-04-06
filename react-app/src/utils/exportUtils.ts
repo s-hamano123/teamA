@@ -1,7 +1,7 @@
 import * as XLSX from "xlsx-js-style";
 
 /**
- * 交通費データを Excel 形式で出力するためのユーティリティです。
+ * 交通費データを Excel 形式で出力するためのユーティリティファイル
  */
 
 export type Expense = {

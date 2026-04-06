@@ -1,7 +1,7 @@
 import "../styles/dialog.css";
 
 /**
- * ダイアログに渡す値です。
+ * ダイアログに渡す値
  */
 type DialogProps = {
   isOpen: boolean;
@@ -13,7 +13,7 @@ type DialogProps = {
 };
 
 /**
- * 画面に確認/警告ダイアログを表示する共通コンポーネントです。
+ * 画面に確認/警告ダイアログを表示する共通コンポーネント
  */
 export const Dialog = ({
   isOpen,

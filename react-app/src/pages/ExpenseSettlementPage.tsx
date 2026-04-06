@@ -6,8 +6,8 @@ import { useExpenseSettlement } from "../hooks/useExpenseSettlement";
 import "../styles/expenseSettlement.css";
 
 /**
- * 交通費精算機能の画面本体です。
- * 入力欄、明細テーブル、ダイアログを組み合わせて表示します。
+ * 交通費精算ページの本体
+ * 入力欄・明細テーブル・ダイアログをまとめて表示
  */
 export const ExpenseSettlementPage = () => {
   const {

@@ -1,9 +1,9 @@
 /**
- * 合計金額の表示と操作ボタンをまとめたファイルです。
+ * 合計金額の表示と操作ボタンをまとめたファイル
  */
 
 /**
- * 合計表示とボタン操作に必要な値です。
+ * 合計表示とボタン操作に必要な値
  */
 type AmountSummaryProps = {
   totalAmount: number;
@@ -13,7 +13,7 @@ type AmountSummaryProps = {
 };
 
 /**
- * 合計金額と「クリア」「精算書出力」ボタンを表示します。
+ * 合計金額と「クリア」「精算書出力」ボタンを表示
  */
 export const AmountSummary = ({
   totalAmount,
