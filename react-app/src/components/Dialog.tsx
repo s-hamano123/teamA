@@ -7,7 +7,7 @@ type DialogProps = {
   isOpen: boolean;
   title: string;
   message: string;
-  type: "confirm" | "alert";
+  type: "confirm" | "alert" | "info";
   onConfirm: () => void;
   onCancel?: () => void;
 };
@@ -48,16 +48,24 @@ export const Dialog = ({
         <div className="dialog-body">
           <div className="dialog-body-content">
             {type === "alert" ? (
+              // 警告アイコン（三角形）
               <svg className="dialog-icon error-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L2 20h20L12 2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
                 <path d="M12 10v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 <circle cx="12" cy="17" r="1" fill="currentColor"/>
               </svg>
-            ) : (
+            ) : type === "confirm" ? (
+              // 確認アイコン（チェックマーク）
               <svg className="dialog-icon confirm-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 16v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                <path d="M8 12l2 2 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              // 情報アイコン（ℹ）
+              <svg className="dialog-icon info-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 8v0.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M12 13v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             )}
             <p>{message}</p>

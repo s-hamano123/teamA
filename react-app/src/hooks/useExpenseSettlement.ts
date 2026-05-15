@@ -12,7 +12,7 @@ type DialogState = {
   isOpen: boolean;
   title: string;
   message: string;
-  type: "confirm" | "alert";
+  type: "confirm" | "alert" | "info";
   onConfirm: () => void;
 };
 
@@ -202,7 +202,14 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
       type: "confirm",
       onConfirm: async () => {
         await exportToExcel(expenses, startDate, endDate, name);
-        closeDialog();
+        // 出力成功のダイアログを表示
+        setDialog({
+          isOpen: true,
+          title: "完了",
+          message: "精算書を出力しました。",
+          type: "info",
+          onConfirm: closeDialog,
+        });
       },
     });
   };
