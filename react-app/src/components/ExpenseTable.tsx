@@ -53,8 +53,7 @@ export const ExpenseTable = ({
           <tr>
             <th>日付</th>
             <th>支払先</th>
-            <th>乗車駅</th>
-            <th>降車駅</th>
+            <th>区間</th>
             <th>金額</th>
             <th>区分</th>
             <th>日数</th>

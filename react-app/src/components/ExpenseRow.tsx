@@ -75,22 +75,21 @@ export const ExpenseRow = ({
         </select>
       </td>
 
-      {/* 乗車駅 */}
+      {/* 利用区間（乗車駅〜降車駅） */}
       <td>
-        <input
-          type="text"
-          value={expense.fromStation}
-          onChange={(e) => onExpenseFieldChange(expense.id, "fromStation", e.target.value)}
-        />
-      </td>
-
-      {/* 降車駅 */}
-      <td>
-        <input
-          type="text"
-          value={expense.toStation}
-          onChange={(e) => onExpenseFieldChange(expense.id, "toStation", e.target.value)}
-        />
+        <div className="route-field">
+          <input
+            type="text"
+            value={expense.fromStation}
+            onChange={(e) => onExpenseFieldChange(expense.id, "fromStation", e.target.value)}
+          />
+          <span className="route-separator">～</span>
+          <input
+            type="text"
+            value={expense.toStation}
+            onChange={(e) => onExpenseFieldChange(expense.id, "toStation", e.target.value)}
+          />
+        </div>
       </td>
 
       {/* 単価 */}

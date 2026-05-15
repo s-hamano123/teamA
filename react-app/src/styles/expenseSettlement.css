@@ -120,30 +120,37 @@ h1 {
   min-width: 90px;
 }
 
+/* 利用区間列 */
+.expense-table th:nth-child(3),
+.expense-table td:nth-child(3) {
+  width: 300px;
+  min-width: 300px;
+}
+
 /* 金額列 */
-.expense-table th:nth-child(5),
-.expense-table td:nth-child(5) {
+.expense-table th:nth-child(4),
+.expense-table td:nth-child(4) {
   width: 12ch;
   min-width: 12ch;
 }
 
 /* 区分列 */
-.expense-table th:nth-child(6),
-.expense-table td:nth-child(6) {
+.expense-table th:nth-child(5),
+.expense-table td:nth-child(5) {
   width: 70px;
   min-width: 70px;
 }
 
 /* 日数列 */
-.expense-table th:nth-child(7),
-.expense-table td:nth-child(7) {
+.expense-table th:nth-child(6),
+.expense-table td:nth-child(6) {
   width: 64px;
   min-width: 64px;
 }
 
 /* 合計列（最大値表示まで確保） */
-.expense-table th:nth-child(8),
-.expense-table td:nth-child(8) {
+.expense-table th:nth-child(7),
+.expense-table td:nth-child(7) {
   width: 14ch;
   min-width: 14ch;
   white-space: nowrap;
@@ -189,9 +196,26 @@ h1 {
   color: #2d5a1f;
 }
 
-.expense-table td:nth-child(5) input {
+.expense-table td:nth-child(4) input {
   min-width: 11ch;
   text-align: right;
+}
+
+.route-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.route-field input {
+  min-width: 0;
+}
+
+.route-separator {
+  color: #2d5a1f;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .expense-table select {

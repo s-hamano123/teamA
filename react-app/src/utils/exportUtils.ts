@@ -80,16 +80,24 @@ export const exportToExcel = async (
     ["精算期間", `${fromDate}〜${toDate}`],
     ["氏名", name],
     [],
-    ["日付", "支払先", "乗車駅", "降車駅", "金額", "区分", "日数", "合計", "備考"],
+    ["合計金額：", totalAmount, "", "", "", "", "", ""], // 6行目：合計行
+    [], // 7行目：空行
+    ["日付", "支払先", "区間", "金額", "区分", "日数", "合計", "備考"], // 8行目：ヘッダー行
   ];
 
   // 表データを追加
   expenses.forEach((expense) => {
+    const fromStation = expense.fromStation.trim();
+    const toStation = expense.toStation.trim();
+    const route =
+      fromStation && toStation
+        ? `${fromStation}〜${toStation}`
+        : fromStation || toStation || "";
+
     reportData.push([
       expense.date,
       expense.paymentType,
-      expense.fromStation,
-      expense.toStation,
+      route,
       expense.amount,
       expense.tripType,
       expense.period,
@@ -97,10 +105,6 @@ export const exportToExcel = async (
       expense.remark,
     ]);
   });
-
-  // 空行を追加
-  reportData.push([]);
-  reportData.push(["合計金額", "", "", "", totalAmount]);
 
   // ワークシートを作成
   const ws = XLSX.utils.aoa_to_sheet(reportData) as WorksheetLike;
@@ -110,8 +114,7 @@ export const exportToExcel = async (
   ws["!cols"] = [
     { wch: 12 }, // 日付
     { wch: 10 }, // 支払先
-    { wch: 10 }, // 乗車駅
-    { wch: 10 }, // 降車駅
+    { wch: 24 }, // 利用区間
     { wch: 12 }, // 金額
     { wch: 8 }, // 区分
     { wch: 6 }, // 日数
@@ -128,11 +131,11 @@ export const exportToExcel = async (
     };
   }
 
-  // タイトル行のセル結合 (A1:I1)
-  ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
+  // タイトル行のセル結合 (A1:H1)
+  ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
 
   // A2行（空行）のスタイル設定 - 罫線なし
-  const a2Cells = ["A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2"];
+  const a2Cells = ["A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2"];
   a2Cells.forEach((cell) => {
     ensureStyledCell(cellMap, cell, {});
   });
@@ -147,8 +150,8 @@ export const exportToExcel = async (
     }
   });
 
-  // ヘッダー行（6行目）のスタイル設定
-  const headerCells = ["A6", "B6", "C6", "D6", "E6", "F6", "G6", "H6", "I6"];
+  // ヘッダー行（8行目）のスタイル設定
+  const headerCells = ["A8", "B8", "C8", "D8", "E8", "F8", "G8", "H8"];
   headerCells.forEach((cell) => {
     if (cellMap[cell]) {
       cellMap[cell].s = {
@@ -160,21 +163,21 @@ export const exportToExcel = async (
     }
   });
 
-  // データ行のスタイル設定（7行目以降）
-  const dataStartRow = 7;
+  // データ行のスタイル設定（9行目以降）
+  const dataStartRow = 9;
   const dataEndRow = dataStartRow + expenses.length - 1;
 
   for (let r = dataStartRow; r <= dataEndRow; r++) {
-    const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+    const cols = ["A", "B", "C", "D", "E", "F", "G", "H"];
     cols.forEach((col, idx) => {
       const cell = `${col}${r}`;
       if (cellMap[cell]) {
         cellMap[cell].s = {
-          alignment: { horizontal: idx === 4 || idx === 7 ? "right" : "left" },
+          alignment: { horizontal: idx === 3 || idx === 6 ? "right" : "left" },
           border: borderStyle,
         };
         // 金額列と合計列には数値フォーマット
-        if (idx === 4 || idx === 7) {
+        if (idx === 3 || idx === 6) {
           cellMap[cell].z = "#,##0";
         }
       }
@@ -182,29 +185,57 @@ export const exportToExcel = async (
   }
 
   // 合計金額行のスタイル
-  const totalRow = dataEndRow + 2;
-  const totalLabelCell = cellMap[`A${totalRow}`];
-  if (totalLabelCell) {
-    totalLabelCell.s = {
-      font: { bold: true },
-      alignment: { horizontal: "left" },
-      border: borderStyle,
-    };
-  }
-  const totalAmountCell = cellMap[`E${totalRow}`];
-  if (totalAmountCell) {
-    totalAmountCell.s = {
-      font: { bold: true },
-      alignment: { horizontal: "right" },
-      border: borderStyle,
-    };
-    totalAmountCell.z = "#,##0";
-  }
-
-  // 合計金額行の空セルにも罫線を追加
-  ["B", "C", "D"].forEach((col) => {
+  const totalRow = 6; // 合計行は6行目に固定
+  
+  // 外側の枠線を適用
+  const leftBorder = {
+    top: { style: "thin", color: { rgb: "000000" } },
+    bottom: { style: "thin", color: { rgb: "000000" } },
+    left: { style: "thin", color: { rgb: "000000" } },
+  };
+  const rightBorder = {
+    top: { style: "thin", color: { rgb: "000000" } },
+    bottom: { style: "thin", color: { rgb: "000000" } },
+    right: { style: "thin", color: { rgb: "000000" } },
+  };
+  
+  ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col, index) => {
     const cell = `${col}${totalRow}`;
-    ensureStyledCell(cellMap, cell, { border: borderStyle });
+    ensureStyledCell(cellMap, cell, {});
+    
+    const cellObj = cellMap[cell] as WorksheetCell;
+    let borderToUse = {}; // デフォルトは枠線なし
+    
+    // 外側の枠線を設定（A・B列のみ）
+    if (index === 0) {
+      borderToUse = leftBorder; // A列: 左枠線
+    } else if (index === 1) {
+      borderToUse = rightBorder; // B列: 右枠線（A・B列をボックスで囲む）
+    }
+    // C～H列は枠線なし
+    
+    if (index === 0) {
+      // A列: ラベル
+      cellObj.s = {
+        font: { bold: true, sz: 12 },
+        alignment: { horizontal: "left", vertical: "center" },
+        border: borderToUse,
+        fill: { patternType: "solid", fgColor: { rgb: "E8F5E9" } },
+      };
+    } else if (index === 1) {
+      // B列: 合計金額
+      cellObj.t = "n"; // 数値型に明示的に設定
+      cellObj.s = {
+        font: { bold: true, sz: 12 },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: borderToUse,
+        fill: { patternType: "solid", fgColor: { rgb: "F1F8E9" } },
+      };
+      cellObj.z = "¥#,##0"; // 通貨フォーマット（円記号付きカンマ区切り）
+    } else {
+      // C～H列: 空セル（背景色なし、枠線なし）
+      cellObj.s = {};
+    }
   });
 
   // ワークシートをワークブックに追加
@@ -220,7 +251,7 @@ export const exportToExcel = async (
   try {
     // File System Access API をサポートしている場合
     type WritableFileStream = {
-      write: (data: ArrayBuffer | Uint8Array) => Promise<void>;
+      write: (data: ArrayBuffer | Uint8Array | Blob) => Promise<void>;
       close: () => Promise<void>;
     };
     type SaveFileHandle = {
@@ -242,7 +273,10 @@ export const exportToExcel = async (
       });
       const writable = await handle.createWritable();
       const workbookData = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      await writable.write(workbookData as ArrayBuffer);
+      const workbookBlob = new Blob([workbookData as ArrayBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      await writable.write(workbookBlob);
       await writable.close();
     } else {
       // フォールバック: 通常のダウンロード
