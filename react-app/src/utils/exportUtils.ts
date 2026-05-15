@@ -1,5 +1,3 @@
-import * as XLSX from "xlsx-js-style";
-
 /**
  * 交通費データを Excel 形式で出力するためのユーティリティファイル
  */
@@ -30,16 +28,32 @@ const borderStyle = {
   right: { style: "thin", color: { rgb: "000000" } },
 };
 
+type WorksheetCell = {
+  t?: string;
+  v?: string | number;
+  s?: Record<string, unknown>;
+  z?: string;
+};
+
+type WorksheetLike = {
+  [key: string]: unknown;
+  ["!cols"]?: Array<{ wch: number }>;
+  ["!merges"]?: Array<{ s: { r: number; c: number }; e: { r: number; c: number } }>;
+};
+
 const ensureStyledCell = (
-  ws: XLSX.WorkSheet,
+  ws: Record<string, WorksheetCell | undefined>,
   cellAddress: string,
   style: Record<string, unknown>
 ) => {
+  const existingCell = ws[cellAddress];
+
   // セルが未作成なら空セルを先に作る
-  if (!ws[cellAddress]) {
-    ws[cellAddress] = { t: "s", v: "" } as XLSX.CellObject;
+  if (!existingCell) {
+    ws[cellAddress] = { t: "s", v: "" };
   }
-  ws[cellAddress].s = style;
+
+  (ws[cellAddress] as WorksheetCell).s = style;
 };
 
 /**
@@ -51,6 +65,8 @@ export const exportToExcel = async (
   toDate: string,
   name: string
 ): Promise<void> => {
+  const XLSX = await import("xlsx-js-style");
+
   // ワークブックを作成
   const wb = XLSX.utils.book_new();
 
@@ -87,7 +103,8 @@ export const exportToExcel = async (
   reportData.push(["合計金額", "", "", "", totalAmount]);
 
   // ワークシートを作成
-  const ws = XLSX.utils.aoa_to_sheet(reportData);
+  const ws = XLSX.utils.aoa_to_sheet(reportData) as WorksheetLike;
+  const cellMap = ws as Record<string, WorksheetCell | undefined>;
 
   // 列幅を設定
   ws["!cols"] = [
@@ -103,8 +120,8 @@ export const exportToExcel = async (
   ];
 
   // タイトル行（A1）のスタイル設定
-  if (ws["A1"]) {
-    ws["A1"].s = {
+  if (cellMap["A1"]) {
+    cellMap["A1"].s = {
       font: { bold: true, sz: 16 },
       alignment: { horizontal: "center", vertical: "center" },
       fill: { patternType: "solid", fgColor: { rgb: "80BB50" } },
@@ -117,13 +134,13 @@ export const exportToExcel = async (
   // A2行（空行）のスタイル設定 - 罫線なし
   const a2Cells = ["A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2"];
   a2Cells.forEach((cell) => {
-    ensureStyledCell(ws, cell, {});
+    ensureStyledCell(cellMap, cell, {});
   });
 
   // 精算期間と氏名のスタイル
   ["A3", "A4"].forEach((cell) => {
-    if (ws[cell]) {
-      ws[cell].s = {
+    if (cellMap[cell]) {
+      cellMap[cell].s = {
         font: { bold: true },
         alignment: { horizontal: "left" },
       };
@@ -133,8 +150,8 @@ export const exportToExcel = async (
   // ヘッダー行（6行目）のスタイル設定
   const headerCells = ["A6", "B6", "C6", "D6", "E6", "F6", "G6", "H6", "I6"];
   headerCells.forEach((cell) => {
-    if (ws[cell]) {
-      ws[cell].s = {
+    if (cellMap[cell]) {
+      cellMap[cell].s = {
         font: { bold: true, color: { rgb: "FFFFFF" } },
         fill: { patternType: "solid", fgColor: { rgb: "548235" } },
         alignment: { horizontal: "center", vertical: "center" },
@@ -151,14 +168,14 @@ export const exportToExcel = async (
     const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
     cols.forEach((col, idx) => {
       const cell = `${col}${r}`;
-      if (ws[cell]) {
-        ws[cell].s = {
+      if (cellMap[cell]) {
+        cellMap[cell].s = {
           alignment: { horizontal: idx === 4 || idx === 7 ? "right" : "left" },
           border: borderStyle,
         };
         // 金額列と合計列には数値フォーマット
         if (idx === 4 || idx === 7) {
-          ws[cell].z = "#,##0";
+          cellMap[cell].z = "#,##0";
         }
       }
     });
@@ -166,26 +183,28 @@ export const exportToExcel = async (
 
   // 合計金額行のスタイル
   const totalRow = dataEndRow + 2;
-  if (ws[`A${totalRow}`]) {
-    ws[`A${totalRow}`].s = {
+  const totalLabelCell = cellMap[`A${totalRow}`];
+  if (totalLabelCell) {
+    totalLabelCell.s = {
       font: { bold: true },
       alignment: { horizontal: "left" },
       border: borderStyle,
     };
   }
-  if (ws[`E${totalRow}`]) {
-    ws[`E${totalRow}`].s = {
+  const totalAmountCell = cellMap[`E${totalRow}`];
+  if (totalAmountCell) {
+    totalAmountCell.s = {
       font: { bold: true },
       alignment: { horizontal: "right" },
       border: borderStyle,
     };
-    ws[`E${totalRow}`].z = "#,##0";
+    totalAmountCell.z = "#,##0";
   }
 
   // 合計金額行の空セルにも罫線を追加
   ["B", "C", "D"].forEach((col) => {
     const cell = `${col}${totalRow}`;
-    ensureStyledCell(ws, cell, { border: borderStyle });
+    ensureStyledCell(cellMap, cell, { border: borderStyle });
   });
 
   // ワークシートをワークブックに追加
@@ -200,8 +219,19 @@ export const exportToExcel = async (
   // ファイルを出力（保存先を選択）
   try {
     // File System Access API をサポートしている場合
-    if ("showSaveFilePicker" in window) {
-      const handle = await (window as any).showSaveFilePicker({
+    type WritableFileStream = {
+      write: (data: ArrayBuffer | Uint8Array) => Promise<void>;
+      close: () => Promise<void>;
+    };
+    type SaveFileHandle = {
+      createWritable: () => Promise<WritableFileStream>;
+    };
+    const windowWithPicker = window as Window & {
+      showSaveFilePicker?: (options?: unknown) => Promise<SaveFileHandle>;
+    };
+
+    if (windowWithPicker.showSaveFilePicker) {
+      const handle = await windowWithPicker.showSaveFilePicker({
         suggestedName: fileName,
         types: [
           {
@@ -211,14 +241,14 @@ export const exportToExcel = async (
         ],
       });
       const writable = await handle.createWritable();
-      const buffer = XLSX.write(wb, { bookType: "xlsx", type: "buffer" });
-      await writable.write(buffer);
+      const workbookData = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      await writable.write(workbookData as ArrayBuffer);
       await writable.close();
     } else {
       // フォールバック: 通常のダウンロード
       XLSX.writeFile(wb, fileName);
     }
-  } catch (error) {
+  } catch {
     // ユーザーがキャンセルした場合など
     console.log("ファイル保存がキャンセルされました");
   }
