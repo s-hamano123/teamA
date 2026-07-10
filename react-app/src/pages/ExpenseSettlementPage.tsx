@@ -20,7 +20,6 @@ export const ExpenseSettlementPage = () => {
     formatAmount,
     formatAmountInput,
     getRowTotal,
-    setName,
     closeDialog,
     handleStartDateChange,
     handleEndDateChange,
@@ -32,6 +31,7 @@ export const ExpenseSettlementPage = () => {
     handlePeriodChange,
     handleExpenseFieldChange,
     handleClearAll,
+    handleRegisterConfirm,
     handleExportConfirm,
   } = useExpenseSettlement();
 
@@ -44,7 +44,6 @@ export const ExpenseSettlementPage = () => {
         name={name}
         onStartDateChange={handleStartDateChange}
         onEndDateChange={handleEndDateChange}
-        onNameChange={setName}
         onDateInputClick={handleDateInputClick}
       />
 
@@ -52,6 +51,7 @@ export const ExpenseSettlementPage = () => {
         totalAmount={totalAmount}
         formatAmount={formatAmount}
         onClearAll={handleClearAll}
+        onRegister={handleRegisterConfirm}
         onExport={handleExportConfirm}
       />
 

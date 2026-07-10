@@ -1,0 +1,21 @@
+diff --git a/node_modules/xlsx-js-style/types/tsconfig.json b/node_modules/xlsx-js-style/types/tsconfig.json
+deleted file mode 100644
+index 63534df..0000000
+--- a/node_modules/xlsx-js-style/types/tsconfig.json
++++ /dev/null
+@@ -1,15 +0,0 @@
+-{
+-    "compilerOptions": {
+-        "module": "commonjs",
+-        "lib": [ "es5" ],
+-        "noImplicitAny": true,
+-        "noImplicitThis": true,
+-        "strictNullChecks": false,
+-        "baseUrl": ".",
+-        "paths": { "xlsx": ["."] },
+-        "types": [],
+-        "noEmit": true,
+-        "strictFunctionTypes": true,
+-        "forceConsistentCasingInFileNames": true
+-    }
+-}

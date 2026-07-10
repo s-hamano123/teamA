@@ -13,7 +13,6 @@ type SettlementHeaderProps = {
   name: string;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
-  onNameChange: (value: string) => void;
   onDateInputClick: (e: MouseEvent<HTMLInputElement>) => void;
 };
 
@@ -26,7 +25,6 @@ export const SettlementHeader = ({
   name,
   onStartDateChange,
   onEndDateChange,
-  onNameChange,
   onDateInputClick,
 }: SettlementHeaderProps) => {
   return (
@@ -49,14 +47,10 @@ export const SettlementHeader = ({
         />
       </div>
 
-      {/* 申請者氏名の入力 */}
+      {/* 申請者氏名 */}
       <div className="form-group">
         <span>氏名：</span>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-        />
+        <span>{name}</span>
       </div>
     </div>
   );

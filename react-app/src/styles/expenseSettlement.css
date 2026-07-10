@@ -373,6 +373,34 @@ h1 {
   box-shadow: 0 2px 4px rgba(84, 130, 53, 0.3);
 }
 
+.register-button {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  width: 92px;
+  min-width: 92px;
+  padding: 8px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  box-sizing: border-box;
+  box-shadow: 0 3px 6px rgba(255, 152, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.register-button:hover {
+  background-color: #f57c00;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(245, 124, 0, 0.4);
+}
+
+.register-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+}
+
 /* 横スクロール対応 */
 .table-wrapper {
   overflow-x: auto;

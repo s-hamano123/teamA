@@ -71,7 +71,7 @@ export const Dialog = ({
             <p>{message}</p>
           </div>
         </div>
-        <div className="dialog-footer">
+        <div className={`dialog-footer ${type === "confirm" ? "dialog-footer-confirm" : ""}`}>
           {type === "confirm" ? (
             <>
               <button className="dialog-button cancel-button" onClick={handleCancel}>

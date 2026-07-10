@@ -18,6 +18,15 @@ export default defineConfig({
       util: 'util/',
     },
   },
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {

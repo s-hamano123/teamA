@@ -9,6 +9,7 @@ type AmountSummaryProps = {
   totalAmount: number;
   formatAmount: (amount: number) => string;
   onClearAll: () => void;
+  onRegister: () => void;
   onExport: () => void;
 };
 
@@ -19,6 +20,7 @@ export const AmountSummary = ({
   totalAmount,
   formatAmount,
   onClearAll,
+  onRegister,
   onExport,
 }: AmountSummaryProps) => {
   return (
@@ -32,6 +34,9 @@ export const AmountSummary = ({
       <div className="button-group">
         <button className="clear-all-button" onClick={onClearAll}>
           クリア
+        </button>
+        <button className="register-button" onClick={onRegister}>
+          登録
         </button>
         <button className="export-button" onClick={onExport}>
           精算書出力

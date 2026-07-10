@@ -1,5 +1,8 @@
-import { useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { exportToExcel, type Expense } from "../utils/exportUtils";
+import { registerExpenses } from "../utils/registerUtils.ts";
+import { fetchExpensesByStartDate } from "../utils/fetchExpensesUtils";
+import { fetchEmployeeProfile } from "../utils/fetchEmployeeUtils";
 
 /**
  * このファイルは、交通費精算画面で使う状態と処理をまとめたものです。
@@ -29,7 +32,6 @@ export type UseExpenseSettlementReturn = {
   formatAmount: (amount: number) => string;
   formatAmountInput: (amount: number) => string;
   getRowTotal: (expense: Expense) => number;
-  setName: (value: string) => void;
   closeDialog: () => void;
   handleStartDateChange: (value: string) => void;
   handleEndDateChange: (value: string) => void;
@@ -45,6 +47,7 @@ export type UseExpenseSettlementReturn = {
     value: Expense[K]
   ) => void;
   handleClearAll: () => void;
+  handleRegisterConfirm: () => void;
   handleExportConfirm: () => void;
 };
 
@@ -99,6 +102,26 @@ const formatAmount = (amount: number): string => amount.toLocaleString("ja-JP");
 const formatAmountInput = (amount: number): string =>
   amount === 0 ? "" : amount.toLocaleString("ja-JP");
 
+const hasInputInAnyRow = (expenses: Expense[]): boolean =>
+  expenses.some(
+    (expense) =>
+      expense.date.trim() !== "" ||
+      expense.fromStation.trim() !== "" ||
+      expense.toStation.trim() !== "" ||
+      expense.amount > 0 ||
+      expense.remark.trim() !== ""
+  );
+
+const hasRowMissingDate = (expenses: Expense[]): boolean =>
+  expenses.some(
+    (expense) =>
+      expense.date.trim() === "" &&
+      (expense.fromStation.trim() !== "" ||
+        expense.toStation.trim() !== "" ||
+        expense.amount > 0 ||
+        expense.remark.trim() !== "")
+  );
+
 /**
  * 交通費精算画面用のカスタムフック。
  * 主に次の3つを担当します。
@@ -107,6 +130,10 @@ const formatAmountInput = (amount: number): string =>
  * 3. 補助処理（合計計算、クリア確認、Excel出力確認）
  */
 export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
+  const initialPeriod = getInitialPeriod();
+  // ログイン実装前の暫定: 画面表示と登録対象の社員IDは固定値を使う
+  const currentEmpId = "0000000003";
+
   // 明細テーブルの行データ
   const [expenses, setExpenses] = useState<Expense[]>([createEmptyExpense(1)]);
 
@@ -119,11 +146,43 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
     onConfirm: () => {},
   });
 
-  const initialPeriod = getInitialPeriod();
   // 画面上部の入力値（精算期間・氏名）
   const [startDate, setStartDate] = useState<string>(initialPeriod.start);
   const [endDate, setEndDate] = useState<string>(initialPeriod.end);
   const [name, setName] = useState<string>("");
+
+  useEffect(() => {
+    let cancelled = false;
+    const currentMonthStart = getInitialPeriod().start;
+
+    // 初期表示時に、固定emp_idの氏名と当月明細を読み込む
+    const loadInitialData = async () => {
+      try {
+        const [profile, monthlyExpenses] = await Promise.all([
+          fetchEmployeeProfile(currentEmpId),
+          fetchExpensesByStartDate(currentMonthStart, currentEmpId),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setName(profile.name);
+
+        if (monthlyExpenses.length > 0) {
+          setExpenses(monthlyExpenses);
+        }
+      } catch (error) {
+        console.error("初期データの取得に失敗しました", error);
+      }
+    };
+
+    void loadInitialData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // 開始日が変わったら、終了日は同月末に自動更新する
   const handleStartDateChange = (value: string) => {
@@ -175,9 +234,81 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
         const period = getInitialPeriod();
         setStartDate(period.start);
         setEndDate(getMonthEndDateFromStart(period.start));
-        setName("");
         setExpenses([createEmptyExpense(1)]);
         closeDialog();
+      },
+    });
+  };
+
+  const handleRegisterConfirm = () => {
+    if (!name.trim()) {
+      setDialog({
+        isOpen: true,
+        title: "入力エラー",
+        message: "氏名を入力してください。",
+        type: "alert",
+        onConfirm: closeDialog,
+      });
+      return;
+    }
+
+    if (!hasInputInAnyRow(expenses)) {
+      setDialog({
+        isOpen: true,
+        title: "入力エラー",
+        message: "登録対象の明細を1件以上入力してください。",
+        type: "alert",
+        onConfirm: closeDialog,
+      });
+      return;
+    }
+
+    if (hasRowMissingDate(expenses)) {
+      setDialog({
+        isOpen: true,
+        title: "入力エラー",
+        message: "登録する明細の日付を入力してください。",
+        type: "alert",
+        onConfirm: closeDialog,
+      });
+      return;
+    }
+
+    setDialog({
+      isOpen: true,
+      title: "確認",
+      message: "登録します。よろしいですか？",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          await registerExpenses({
+            expenses,
+            startDate,
+            endDate,
+            name,
+            totalAmount,
+          });
+          setDialog({
+            isOpen: true,
+            title: "完了",
+            message: `登録しました。`,
+            type: "info",
+            onConfirm: closeDialog,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "DB登録中にエラーが発生しました。";
+
+          setDialog({
+            isOpen: true,
+            title: "登録エラー",
+            message,
+            type: "alert",
+            onConfirm: closeDialog,
+          });
+        }
       },
     });
   };
@@ -232,8 +363,8 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
   };
 
   const handlePeriodChange = (id: number, value: string) => {
-    // 日数は0〜999の範囲で入力できるように制限する
-    if (!/^\d{0,3}$/.test(value)) {
+    // 日数は0〜99の範囲で入力できるように制限する
+    if (!/^\d{0,2}$/.test(value)) {
       return;
     }
 
@@ -260,7 +391,6 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
     formatAmount,
     formatAmountInput,
     getRowTotal,
-    setName,
     closeDialog,
     handleStartDateChange,
     handleEndDateChange,
@@ -272,6 +402,7 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
     handlePeriodChange,
     handleExpenseFieldChange,
     handleClearAll,
+    handleRegisterConfirm,
     handleExportConfirm,
   };
 };

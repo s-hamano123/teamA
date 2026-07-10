@@ -71,3 +71,32 @@ export default defineConfig([
   },
 ])
 ```
+
+## Transportation Expense Registration API
+
+This project now includes a simple server-side API to register transportation expenses into PostgreSQL.
+
+- API server: `server/index.ts`
+- Endpoint: `POST /api/transportation-expenses/register`
+- Target table: `a_transportation_expenses_info`
+
+Default DB connection values (can be overridden by environment variables):
+
+- `PGHOST=192.168.1.82`
+- `PGDATABASE=actdb`
+- `PGUSER=actuser`
+- `PGPASSWORD=actuser`
+- `PGPORT=5432`
+- `PGSCHEMA=public`
+
+Run frontend + backend together:
+
+```bash
+npm run dev:full
+```
+
+Run only backend API:
+
+```bash
+npm run dev:server
+```
