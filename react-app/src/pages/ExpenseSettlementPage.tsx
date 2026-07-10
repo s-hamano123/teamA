@@ -9,12 +9,17 @@ import "../styles/expenseSettlement.css";
  * 交通費精算ページの本体
  * 入力欄・明細テーブル・ダイアログをまとめて表示
  */
-export const ExpenseSettlementPage = () => {
+type ExpenseSettlementPageProps = {
+  empId: string;
+};
+
+export const ExpenseSettlementPage = ({ empId }: ExpenseSettlementPageProps) => {
   const {
     expenses,
+    invalidExpenseIds,
     dialog,
+    isReferenceMode,
     startDate,
-    endDate,
     name,
     totalAmount,
     formatAmount,
@@ -22,7 +27,6 @@ export const ExpenseSettlementPage = () => {
     getRowTotal,
     closeDialog,
     handleStartDateChange,
-    handleEndDateChange,
     handleDateInputClick,
     handleAdd,
     handleDelete,
@@ -33,22 +37,20 @@ export const ExpenseSettlementPage = () => {
     handleClearAll,
     handleRegisterConfirm,
     handleExportConfirm,
-  } = useExpenseSettlement();
+  } = useExpenseSettlement(empId);
 
   return (
     <div>
       <h1>交通費精算</h1>
       <SettlementHeader
         startDate={startDate}
-        endDate={endDate}
         name={name}
         onStartDateChange={handleStartDateChange}
-        onEndDateChange={handleEndDateChange}
-        onDateInputClick={handleDateInputClick}
       />
 
       <AmountSummary
         totalAmount={totalAmount}
+        isReferenceMode={isReferenceMode}
         formatAmount={formatAmount}
         onClearAll={handleClearAll}
         onRegister={handleRegisterConfirm}
@@ -57,6 +59,8 @@ export const ExpenseSettlementPage = () => {
 
       <ExpenseTable
         expenses={expenses}
+        invalidExpenseIds={invalidExpenseIds}
+        isReferenceMode={isReferenceMode}
         formatAmount={formatAmount}
         formatAmountInput={formatAmountInput}
         getRowTotal={getRowTotal}

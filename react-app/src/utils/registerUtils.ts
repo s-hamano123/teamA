@@ -5,6 +5,7 @@ type RegisterExpensesRequest = {
   startDate: string;
   endDate: string;
   name: string;
+  empId: string;
   totalAmount: number;
 };
 

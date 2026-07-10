@@ -31,12 +31,92 @@ a:hover {
 /* 画面全体の配置 */
 body {
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  display: block;
   min-width: 320px;
   min-height: 100vh;
-  padding-top: 20px;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background-color: #e8f5e8;
+}
+
+.login-card {
+  width: min(100%, 420px);
+  padding: 32px 28px 28px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid #2d5a1f;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.login-card h1 {
+  margin: 0 0 24px;
+  font-size: 2rem;
+  line-height: 1.2;
+  text-align: center;
+  background-color: #548235;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  padding: 16px 12px;
+  border-radius: 8px;
+}
+
+.login-card form {
+  display: grid;
+  gap: 16px;
+}
+
+.login-card .form-group {
+  display: grid;
+  gap: 6px;
+}
+
+.login-card label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d5a1f;
+}
+
+.login-card input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #548235;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: #fff;
+  color: #2d5a1f;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: #2d5a1f;
+  box-shadow: 0 0 0 3px rgba(84, 130, 53, 0.15);
+}
+
+.login-card button {
+  width: 100%;
+  margin-top: 4px;
+  padding: 0.8em 1.2em;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: #fff;
+  border: 1px solid transparent;
+}
+
+.login-card button:hover {
+  border-color: transparent;
+  filter: brightness(1.05);
 }
 
 h1 {
@@ -62,6 +142,16 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin: 0.5rem 0 0;
+  font-weight: 600;
+}
+
+.password-like-input {
+  -webkit-text-security: disc;
 }
 
 /* ライトテーマ時の上書き */

@@ -1,44 +1,85 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, type FormEvent } from 'react'
 
-export function LoginPage() {
+type LoginPageProps = {
+  onLoginSuccess: (empId: string) => void
+}
+
+const loginErrorMessage = 'ユーザーIDまたはパスワードが違います。'
+
+export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [userId, setUserId] = useState('')
-  const [passwd, setPasswd] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const API_URL = import.meta.env.VITE_API_URL
 
-  const navigate = useNavigate()
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    navigate('/')
+
+    setError('')
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          passwd: password,
+        }),
+      })
+
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string; empId?: string }
+        | null
+
+      if (!response.ok) {
+        setError(loginErrorMessage)
+        return
+      }
+
+      onLoginSuccess(body?.empId ?? '')
+    } catch {
+      setError(loginErrorMessage)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div>
+    <div className="login-page">
+      <div className="login-card">
         <h1>交通費精算システム</h1>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="on">
           <div className="form-group">
             <label htmlFor="userId">ユーザーID</label>
             <input
               id="userId"
+              name="login-user-id"
               type="text"
+              maxLength={16}
+              autoComplete="username"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder="ユーザーID を入力"
+              placeholder="16文字以内のユーザーIDを入力"
               disabled={isLoading}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="passwd">パスワード</label>
+            <label htmlFor="password">パスワード</label>
             <input
-              id="passwd"
-              type="password"
-              value={passwd}
-              onChange={(e) => setPasswd(e.target.value)}
-              placeholder="パスワードを入力"
+              id="password"
+              name="login-password"
+              type="text"
+              inputMode="text"
+              className="password-like-input"
+              maxLength={72}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="72文字以内で入力"
               disabled={isLoading}
             />
           </div>
@@ -49,6 +90,7 @@ export function LoginPage() {
             {isLoading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { exportToExcel, type Expense } from "../utils/exportUtils";
 import { registerExpenses } from "../utils/registerUtils.ts";
 import { fetchExpensesByStartDate } from "../utils/fetchExpensesUtils";
@@ -24,9 +24,10 @@ type DialogState = {
  */
 export type UseExpenseSettlementReturn = {
   expenses: Expense[];
+  invalidExpenseIds: number[];
   dialog: DialogState;
+  isReferenceMode: boolean;
   startDate: string;
-  endDate: string;
   name: string;
   totalAmount: number;
   formatAmount: (amount: number) => string;
@@ -34,7 +35,6 @@ export type UseExpenseSettlementReturn = {
   getRowTotal: (expense: Expense) => number;
   closeDialog: () => void;
   handleStartDateChange: (value: string) => void;
-  handleEndDateChange: (value: string) => void;
   handleDateInputClick: (e: MouseEvent<HTMLInputElement>) => void;
   handleAdd: () => void;
   handleDelete: (id: number) => void;
@@ -65,14 +65,12 @@ const createEmptyExpense = (id: number): Expense => ({
 });
 
 // 初期表示の精算期間（当月1日〜月末）の作成
-const getInitialPeriod = (): { start: string; end: string } => {
+const getInitialPeriod = (): { start: string } => {
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const start = `${yyyy}-${mm}-01`;
-  const lastDay = new Date(yyyy, now.getMonth() + 1, 0).getDate();
-  const end = `${yyyy}-${mm}-${String(lastDay).padStart(2, "0")}`;
-  return { start, end };
+  return { start };
 };
 
 // 開始日と同じ月の月末日を返す
@@ -112,15 +110,50 @@ const hasInputInAnyRow = (expenses: Expense[]): boolean =>
       expense.remark.trim() !== ""
   );
 
-const hasRowMissingDate = (expenses: Expense[]): boolean =>
-  expenses.some(
-    (expense) =>
-      expense.date.trim() === "" &&
-      (expense.fromStation.trim() !== "" ||
-        expense.toStation.trim() !== "" ||
-        expense.amount > 0 ||
-        expense.remark.trim() !== "")
+const hasRequiredRegisterFieldsMissing = (expense: Expense): boolean => {
+  const hasFromStation = expense.fromStation.trim() !== "";
+  const hasToStation = expense.toStation.trim() !== "";
+  const hasAmount = expense.amount > 0;
+
+  return !hasFromStation || !hasToStation || !hasAmount;
+};
+
+const areExpensesEqual = (left: Expense[], right: Expense[]): boolean => {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((row, index) => {
+    const next = right[index];
+    return (
+      row.id === next.id &&
+      row.date === next.date &&
+      row.paymentType === next.paymentType &&
+      row.fromStation === next.fromStation &&
+      row.toStation === next.toStation &&
+      row.amount === next.amount &&
+      row.tripType === next.tripType &&
+      row.period === next.period &&
+      row.remark === next.remark
+    );
+  });
+};
+
+const isReferenceModeMonth = (dateText: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+    return true;
+  }
+
+  const targetYm = Number(dateText.slice(0, 7).replace("-", ""));
+  const now = new Date();
+  const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const previousYm = Number(
+    `${previousMonth.getFullYear()}${String(previousMonth.getMonth() + 1).padStart(2, "0")}`
   );
+
+  // 先月より前は参照モード（当月と未来月は編集可）
+  return targetYm < previousYm;
+};
 
 /**
  * 交通費精算画面用のカスタムフック。
@@ -129,13 +162,13 @@ const hasRowMissingDate = (expenses: Expense[]): boolean =>
  * 2. 入力値の更新（追加・削除・各項目変更）
  * 3. 補助処理（合計計算、クリア確認、Excel出力確認）
  */
-export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
+export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlementReturn => {
   const initialPeriod = getInitialPeriod();
-  // ログイン実装前の暫定: 画面表示と登録対象の社員IDは固定値を使う
-  const currentEmpId = "0000000003";
+  const effectiveEmpId = currentEmpId || "0000000003";
 
   // 明細テーブルの行データ
   const [expenses, setExpenses] = useState<Expense[]>([createEmptyExpense(1)]);
+  const [invalidExpenseIds, setInvalidExpenseIds] = useState<number[]>([]);
 
   // 確認ダイアログ/警告ダイアログの状態
   const [dialog, setDialog] = useState<DialogState>({
@@ -148,8 +181,34 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
 
   // 画面上部の入力値（精算期間・氏名）
   const [startDate, setStartDate] = useState<string>(initialPeriod.start);
-  const [endDate, setEndDate] = useState<string>(initialPeriod.end);
   const [name, setName] = useState<string>("");
+  const loadRequestIdRef = useRef(0);
+
+  const loadExpensesByStartDate = async (targetStartDate: string) => {
+    const requestId = ++loadRequestIdRef.current;
+
+    try {
+      const monthlyExpenses = await fetchExpensesByStartDate(targetStartDate, effectiveEmpId);
+
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
+
+      if (monthlyExpenses.length > 0) {
+        setInvalidExpenseIds([]);
+        setExpenses((prev) => (areExpensesEqual(prev, monthlyExpenses) ? prev : monthlyExpenses));
+        return;
+      }
+
+      setExpenses((prev) => {
+        const emptyRows = [createEmptyExpense(1)];
+        setInvalidExpenseIds([]);
+        return areExpensesEqual(prev, emptyRows) ? prev : emptyRows;
+      });
+    } catch (error) {
+      console.error("精算期間データの取得に失敗しました", error);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -158,20 +217,14 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
     // 初期表示時に、固定emp_idの氏名と当月明細を読み込む
     const loadInitialData = async () => {
       try {
-        const [profile, monthlyExpenses] = await Promise.all([
-          fetchEmployeeProfile(currentEmpId),
-          fetchExpensesByStartDate(currentMonthStart, currentEmpId),
-        ]);
+        const profile = await fetchEmployeeProfile(effectiveEmpId);
 
         if (cancelled) {
           return;
         }
 
         setName(profile.name);
-
-        if (monthlyExpenses.length > 0) {
-          setExpenses(monthlyExpenses);
-        }
+        await loadExpensesByStartDate(currentMonthStart);
       } catch (error) {
         console.error("初期データの取得に失敗しました", error);
       }
@@ -184,15 +237,15 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
     };
   }, []);
 
-  // 開始日が変わったら、終了日は同月末に自動更新する
+  // 開始日変更時に、その日の属する月データを再取得する
   const handleStartDateChange = (value: string) => {
-    setStartDate(value);
-    setEndDate(getMonthEndDateFromStart(value));
-  };
+    if (value === startDate) {
+      return;
+    }
 
-  // 終了日を手動で変更する
-  const handleEndDateChange = (value: string) => {
-    setEndDate(value);
+    setInvalidExpenseIds([]);
+    setStartDate(value);
+    void loadExpensesByStartDate(value);
   };
 
   // 明細を1行追加する
@@ -233,7 +286,7 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
       onConfirm: () => {
         const period = getInitialPeriod();
         setStartDate(period.start);
-        setEndDate(getMonthEndDateFromStart(period.start));
+        setInvalidExpenseIds([]);
         setExpenses([createEmptyExpense(1)]);
         closeDialog();
       },
@@ -263,11 +316,20 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
       return;
     }
 
-    if (hasRowMissingDate(expenses)) {
+    const invalidRowIndex = expenses.findIndex((expense) =>
+      hasRequiredRegisterFieldsMissing(expense)
+    );
+
+    if (invalidRowIndex >= 0) {
+      setInvalidExpenseIds(
+        expenses
+          .filter((expense) => hasRequiredRegisterFieldsMissing(expense))
+          .map((expense) => expense.id)
+      );
       setDialog({
         isOpen: true,
         title: "入力エラー",
-        message: "登録する明細の日付を入力してください。",
+        message: "区間（乗車駅・降車駅）と金額を入力してください。",
         type: "alert",
         onConfirm: closeDialog,
       });
@@ -286,6 +348,7 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
             startDate,
             endDate,
             name,
+            empId: effectiveEmpId,
             totalAmount,
           });
           setDialog({
@@ -380,12 +443,15 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
 
   // 一覧下部に表示する合計金額
   const totalAmount = expenses.reduce((sum, expense) => sum + getRowTotal(expense), 0);
+  const isReferenceMode = isReferenceModeMonth(startDate);
+  const endDate = getMonthEndDateFromStart(startDate);
 
   return {
     expenses,
+    invalidExpenseIds,
     dialog,
+    isReferenceMode,
     startDate,
-    endDate,
     name,
     totalAmount,
     formatAmount,
@@ -393,7 +459,6 @@ export const useExpenseSettlement = (): UseExpenseSettlementReturn => {
     getRowTotal,
     closeDialog,
     handleStartDateChange,
-    handleEndDateChange,
     handleDateInputClick,
     handleAdd,
     handleDelete,

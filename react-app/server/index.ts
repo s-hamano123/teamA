@@ -1,4 +1,5 @@
 import cors from "cors";
+import { compare } from "bcryptjs";
 import express, { type Request, type Response } from "express";
 import { Pool, type QueryConfig } from "pg";
 
@@ -17,6 +18,18 @@ type RegisterRequestBody = {
   expenses: ExpensePayload[];
   startDate: string;
   name: string;
+  empId?: string;
+};
+
+type LoginRequestBody = {
+  user_id: string;
+  passwd: string;
+};
+
+type LoginRow = {
+  user_id: string;
+  emp_id: string;
+  passwd: string;
 };
 
 type SqlValue = string | number | Date;
@@ -50,6 +63,7 @@ const DB_PORT = Number(process.env.PGPORT ?? 5432);
 const DB_SCHEMA = process.env.PGSCHEMA ?? "public";
 const TABLE_NAME = "a_transportation_expenses_info";
 const EMPLOYEE_MASTER_TABLE = "employee_mst";
+const USER_MASTER_TABLE = "weekly_report_user_mst";
 const DEFAULT_EMP_ID = process.env.DEFAULT_EMP_ID ?? "0000000003";
 
 const pool = new Pool({
@@ -120,6 +134,18 @@ const parseRegisterRequestBody = (body: unknown): RegisterRequestBody | null => 
     expenses,
     startDate: toStringValue(body.startDate),
     name: toStringValue(body.name),
+    empId: toStringValue(body.empId),
+  };
+};
+
+const parseLoginRequestBody = (body: unknown): LoginRequestBody | null => {
+  if (!isRecord(body)) {
+    return null;
+  }
+
+  return {
+    user_id: toStringValue(body.user_id),
+    passwd: toStringValue(body.passwd),
   };
 };
 
@@ -130,12 +156,13 @@ const isBlankRow = (expense: ExpensePayload): boolean =>
   Number(expense.amount) === 0 &&
   expense.remark.trim() === "";
 
-const hasRowMissingDate = (expense: ExpensePayload): boolean =>
-  expense.date.trim() === "" &&
-  (expense.fromStation.trim() !== "" ||
-    expense.toStation.trim() !== "" ||
-    Number(expense.amount) > 0 ||
-    expense.remark.trim() !== "");
+const hasRequiredRegisterFieldsMissing = (expense: ExpensePayload): boolean => {
+  const hasFromStation = expense.fromStation.trim() !== "";
+  const hasToStation = expense.toStation.trim() !== "";
+  const hasAmount = Number(expense.amount) > 0;
+
+  return !hasFromStation || !hasToStation || !hasAmount;
+};
 
 const getRowTotal = (expense: ExpensePayload): number => {
   const base = Number(expense.amount) * Number(expense.period);
@@ -304,6 +331,64 @@ app.get("/api/employee-profile", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/api/login", async (req: Request, res: Response) => {
+  const body = parseLoginRequestBody(req.body);
+
+  if (!body) {
+    res.status(400).json({ message: "リクエスト形式が不正です。" });
+    return;
+  }
+
+  const { user_id, passwd } = body;
+
+  if (!user_id || !passwd) {
+    res.status(400).json({ message: "ユーザーIDとパスワードを入力してください。" });
+    return;
+  }
+
+  if (passwd.length > 72) {
+    res.status(400).json({ message: "パスワードは72文字以内で入力してください。" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<LoginRow>(
+      `SELECT user_id, emp_id, passwd
+         FROM "${DB_SCHEMA}"."${USER_MASTER_TABLE}"
+        WHERE user_id = $1
+        LIMIT 1`,
+      [user_id]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(401).json({ message: "ユーザーIDまたはパスワードが違います。" });
+      return;
+    }
+
+    const loginRow = result.rows[0];
+    const isMatched = await compare(passwd, loginRow.passwd);
+
+    if (!isMatched) {
+      res.status(401).json({ message: "ユーザーIDまたはパスワードが違います。" });
+      return;
+    }
+
+    await pool.query(
+      `UPDATE "${DB_SCHEMA}"."${USER_MASTER_TABLE}"
+          SET last_login_date = NOW()
+        WHERE user_id = $1`,
+      [user_id]
+    );
+
+    res.json({ empId: loginRow.emp_id });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "ログイン中に予期しないエラーが発生しました。";
+
+    res.status(500).json({ message });
+  }
+});
+
 app.get("/api/transportation-expenses", async (req: Request, res: Response) => {
   const startDateQuery =
     typeof req.query.startDate === "string" ? req.query.startDate : "";
@@ -361,7 +446,7 @@ app.post(
       return;
     }
 
-    const { expenses, startDate, name } = body;
+    const { expenses, startDate, name, empId } = body;
 
     if (!name || name.trim() === "") {
       res.status(400).json({ message: "氏名を入力してください。" });
@@ -373,21 +458,31 @@ app.post(
       return;
     }
 
-    const validExpenses = expenses.filter((expense) => !isBlankRow(expense));
-
-    if (validExpenses.length === 0) {
+    if (expenses.every((expense) => isBlankRow(expense))) {
       res.status(400).json({ message: "登録対象の明細を1件以上入力してください。" });
       return;
     }
 
-    if (validExpenses.some(hasRowMissingDate)) {
-      res.status(400).json({ message: "登録する明細の日付を入力してください。" });
+    const invalidRowIndex = expenses.findIndex((expense) =>
+      hasRequiredRegisterFieldsMissing(expense)
+    );
+
+    if (invalidRowIndex >= 0) {
+      res.status(400).json({
+        message: "区間（乗車駅・降車駅）と金額を入力してください。",
+      });
       return;
     }
 
     const client = await pool.connect();
-    const empId = DEFAULT_EMP_ID;
+    const targetEmpId = empId || DEFAULT_EMP_ID;
     const settleMonth = getSettlementMonth(startDate);
+
+    if (!settleMonth) {
+      res.status(400).json({ message: "startDate の形式が不正です。" });
+      client.release();
+      return;
+    }
 
     try {
       await client.query("BEGIN");
@@ -397,16 +492,18 @@ app.post(
         `DELETE FROM "${DB_SCHEMA}"."${TABLE_NAME}"
           WHERE emp_id = $1
             AND settle_month = $2`,
-        [empId, settleMonth]
+        [targetEmpId, settleMonth]
       );
 
       let insertedCount = 0;
 
-      for (const [index, expense] of validExpenses.entries()) {
+      for (const [index, expense] of expenses.entries()) {
+        const registerDate = expense.date.trim() === "" ? startDate : expense.date;
+
         const candidateRow = buildInsertRow({
-          empId,
+          empId: targetEmpId,
           settleMonth,
-          expense,
+          expense: { ...expense, date: registerDate },
           itemNo: index + 1,
         });
 

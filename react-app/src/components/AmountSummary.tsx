@@ -7,6 +7,7 @@
  */
 type AmountSummaryProps = {
   totalAmount: number;
+  isReferenceMode: boolean;
   formatAmount: (amount: number) => string;
   onClearAll: () => void;
   onRegister: () => void;
@@ -18,6 +19,7 @@ type AmountSummaryProps = {
  */
 export const AmountSummary = ({
   totalAmount,
+  isReferenceMode,
   formatAmount,
   onClearAll,
   onRegister,
@@ -31,17 +33,19 @@ export const AmountSummary = ({
       </div>
 
       {/* 一括クリアとExcel出力の操作 */}
-      <div className="button-group">
-        <button className="clear-all-button" onClick={onClearAll}>
-          クリア
-        </button>
-        <button className="register-button" onClick={onRegister}>
-          登録
-        </button>
-        <button className="export-button" onClick={onExport}>
-          精算書出力
-        </button>
-      </div>
+      {!isReferenceMode && (
+        <div className="button-group">
+          <button className="clear-all-button" onClick={onClearAll}>
+            クリア
+          </button>
+          <button className="register-button" onClick={onRegister}>
+            登録
+          </button>
+          <button className="export-button" onClick={onExport}>
+            精算書出力
+          </button>
+        </div>
+      )}
     </div>
   );
 };

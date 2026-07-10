@@ -13,6 +13,8 @@ type EditableExpenseField = Exclude<keyof Expense, "id">;
  */
 type ExpenseTableProps = {
   expenses: Expense[];
+  invalidExpenseIds: number[];
+  isReferenceMode: boolean;
   formatAmount: (amount: number) => string;
   formatAmountInput: (amount: number) => string;
   getRowTotal: (expense: Expense) => number;
@@ -34,6 +36,8 @@ type ExpenseTableProps = {
  */
 export const ExpenseTable = ({
   expenses,
+  invalidExpenseIds,
+  isReferenceMode,
   formatAmount,
   formatAmountInput,
   getRowTotal,
@@ -69,7 +73,9 @@ export const ExpenseTable = ({
             <ExpenseRow
               key={expense.id}
               expense={expense}
+              isInvalid={invalidExpenseIds.includes(expense.id)}
               isFirstRow={index === 0}
+              isReferenceMode={isReferenceMode}
               formatAmount={formatAmount}
               formatAmountInput={formatAmountInput}
               getRowTotal={getRowTotal}

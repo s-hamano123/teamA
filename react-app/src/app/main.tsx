@@ -1,17 +1,27 @@
-import { StrictMode } from 'react'
+import { StrictMode, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import '../styles/index.css'
 import { ExpenseSettlementPage } from '../pages/ExpenseSettlementPage'
 import { LoginPage } from '../pages/LoginPage'
 
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [empId, setEmpId] = useState('')
+
+  return isLoggedIn ? (
+    <ExpenseSettlementPage empId={empId} />
+  ) : (
+    <LoginPage
+      onLoginSuccess={(nextEmpId) => {
+        setEmpId(nextEmpId)
+        setIsLoggedIn(true)
+      }}
+    />
+  )
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<ExpenseSettlementPage />} />
-      </Routes>
-    </BrowserRouter>
+    <App />
   </StrictMode>,
 )
