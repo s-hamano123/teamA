@@ -1,15 +1,17 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import '../styles/index.css'
 import { ExpenseSettlementPage } from '../pages/ExpenseSettlementPage'
-
-/**
- * アプリを起動する入口です。
- * ここで交通費精算ページを画面に表示します。
- */
+import { LoginPage } from '../pages/LoginPage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ExpenseSettlementPage />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<ExpenseSettlementPage />} />
+      </Routes>
+    </BrowserRouter>
   </StrictMode>,
 )
