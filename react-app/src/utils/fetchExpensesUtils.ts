@@ -1,10 +1,15 @@
+/**
+ * 指定月の交通費明細をAPIから取得するユーティリティ
+ */
 import type { Expense } from "./exportUtils";
 
+// APIレスポンスの型（エラー時は message のみ返る）
 type FetchExpensesResponse = {
   expenses?: Expense[];
   message?: string;
 };
 
+// 開始日と社員IDをもとに、対象月の明細一覧をAPIから取得する
 export const fetchExpensesByStartDate = async (
   startDate: string,
   empId: string

@@ -18,7 +18,7 @@ type RegisterRequestBody = {
   expenses: ExpensePayload[];
   startDate: string;
   name: string;
-  empId?: string;
+  empId: string;
 };
 
 type LoginRequestBody = {
@@ -34,7 +34,7 @@ type LoginRow = {
 
 type SqlValue = string | number | Date;
 
-type CandidateRow = Record<string, SqlValue>;
+type InsertRow = Record<string, SqlValue>;
 
 type ExpenseSelectRow = {
   item_no: number;
@@ -64,7 +64,6 @@ const DB_SCHEMA = process.env.PGSCHEMA ?? "public";
 const TABLE_NAME = "a_transportation_expenses_info";
 const EMPLOYEE_MASTER_TABLE = "employee_mst";
 const USER_MASTER_TABLE = "weekly_report_user_mst";
-const DEFAULT_EMP_ID = process.env.DEFAULT_EMP_ID ?? "0000000003";
 
 const pool = new Pool({
   host: DB_HOST,
@@ -78,12 +77,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 値がオブジェクト型（null除く）かどうかを判定する
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
+// 値を安全に文字列へ変換する（文字列以外は空文字列にする）
 const toStringValue = (value: unknown): string =>
   typeof value === "string" ? value : "";
 
+// 値を安全に数値へ変換する（変換不能な場合は 0 にする）
 const toNumberValue = (value: unknown): number => {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
@@ -97,9 +99,11 @@ const toNumberValue = (value: unknown): number => {
   return 0;
 };
 
+// 区分値を「片道」または「往復」に正規化する
 const normalizeTripType = (value: unknown): "片道" | "往復" =>
   value === "往復" ? "往復" : "片道";
 
+// 未検証の入力値を安全な ExpensePayload 型に正規化する
 const normalizeExpense = (value: unknown): ExpensePayload | null => {
   if (!isRecord(value)) {
     return null;
@@ -117,6 +121,7 @@ const normalizeExpense = (value: unknown): ExpensePayload | null => {
   };
 };
 
+// 登録APIのリクエストボディをパースし、型安全なオブジェクトに変換する
 const parseRegisterRequestBody = (body: unknown): RegisterRequestBody | null => {
   if (!isRecord(body)) {
     return null;
@@ -130,14 +135,20 @@ const parseRegisterRequestBody = (body: unknown): RegisterRequestBody | null => 
     .map((expense) => normalizeExpense(expense))
     .filter((expense): expense is ExpensePayload => expense !== null);
 
+  const empId = toStringValue(body.empId);
+  if (empId.trim() === "") {
+    return null;
+  }
+
   return {
     expenses,
     startDate: toStringValue(body.startDate),
     name: toStringValue(body.name),
-    empId: toStringValue(body.empId),
+    empId,
   };
 };
 
+// ログインAPIのリクエストボディをパースし、型安全なオブジェクトに変換する
 const parseLoginRequestBody = (body: unknown): LoginRequestBody | null => {
   if (!isRecord(body)) {
     return null;
@@ -149,6 +160,17 @@ const parseLoginRequestBody = (body: unknown): LoginRequestBody | null => {
   };
 };
 
+// クエリパラメータから社員IDを取得する（未指定または空の場合は null を返す）
+const getEmpIdFromQuery = (value: unknown): string | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+};
+
+// 全項目が空白の行（登録不要なスキップ対象）かどうかを判定する
 const isBlankRow = (expense: ExpensePayload): boolean =>
   expense.date.trim() === "" &&
   expense.fromStation.trim() === "" &&
@@ -156,7 +178,8 @@ const isBlankRow = (expense: ExpensePayload): boolean =>
   Number(expense.amount) === 0 &&
   expense.remark.trim() === "";
 
-const hasRequiredRegisterFieldsMissing = (expense: ExpensePayload): boolean => {
+// 登録必須項目（乗車駅・降車駅・金額）が未入力かどうかを判定する
+const isMissingRequiredFields = (expense: ExpensePayload): boolean => {
   const hasFromStation = expense.fromStation.trim() !== "";
   const hasToStation = expense.toStation.trim() !== "";
   const hasAmount = Number(expense.amount) > 0;
@@ -164,11 +187,13 @@ const hasRequiredRegisterFieldsMissing = (expense: ExpensePayload): boolean => {
   return !hasFromStation || !hasToStation || !hasAmount;
 };
 
+// 1行分の小計を計算する（往復の場合は2倍）
 const getRowTotal = (expense: ExpensePayload): number => {
   const base = Number(expense.amount) * Number(expense.period);
   return expense.tripType === "往復" ? base * 2 : base;
 };
 
+// 日付値から精算月（YYYY-MM-01形式）を生成する
 const getSettlementMonth = (value: string): string => {
   if (!value) {
     return "";
@@ -180,12 +205,13 @@ const getSettlementMonth = (value: string): string => {
   return `${year}-${month}-01`;
 };
 
+// INSERTに必要な行データを構築する
 const buildInsertRow = (params: {
   empId: string;
   settleMonth: string;
   expense: ExpensePayload;
   itemNo: number;
-}): CandidateRow => {
+}): InsertRow => {
   const { empId, settleMonth, expense, itemNo } = params;
   const rowTotal = getRowTotal(expense);
 
@@ -205,20 +231,8 @@ const buildInsertRow = (params: {
   };
 };
 
-const createInsertStatement = (
-  columns: string[],
-  values: SqlValue[]
-): QueryConfig<SqlValue[]> => {
-  const quotedColumns = columns.map((column) => `"${column}"`).join(", ");
-  const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(", ");
-
-  return {
-    text: `INSERT INTO "${DB_SCHEMA}"."${TABLE_NAME}" (${quotedColumns}) VALUES (${placeholders})`,
-    values,
-  };
-};
-
-const buildInsertStatement = (candidateRow: CandidateRow): QueryConfig<SqlValue[]> => {
+// 定義済みカラム一覧を使って INSERT クエリを組み立てる
+const buildInsertStatement = (candidateRow: InsertRow): QueryConfig<SqlValue[]> => {
   const columns = [
     "emp_id",
     "settle_month",
@@ -233,13 +247,18 @@ const buildInsertStatement = (candidateRow: CandidateRow): QueryConfig<SqlValue[
     "total_amt",
     "remarks",
   ];
+  const quotedColumns = columns.map((col) => `"${col}"`).join(", ");
+  const placeholders = columns.map((_, idx) => `$${idx + 1}`).join(", ");
+  const values = columns.map((col) => candidateRow[col]);
 
-  const values = columns.map((column) => candidateRow[column]);
-
-  return createInsertStatement(columns, values);
+  return {
+    text: `INSERT INTO "${DB_SCHEMA}"."${TABLE_NAME}" (${quotedColumns}) VALUES (${placeholders})`,
+    values,
+  };
 };
 
-const toYyyyMmDd = (value: string | Date): string => {
+// DBから取得した日付値を YYYY-MM-DD 形式の文字列に正規化する
+const toIsoDate = (value: string | Date): string => {
   if (value instanceof Date) {
     const yyyy = value.getFullYear();
     const mm = String(value.getMonth() + 1).padStart(2, "0");
@@ -267,21 +286,15 @@ const toYyyyMmDd = (value: string | Date): string => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+// DBの支払先コード（1=ICチップ、2=切符）を文字列ユニオン型に変換する
 const toPaymentType = (value: string | number): "ICチップ" | "切符" =>
   String(value) === "1" ? "ICチップ" : "切符";
 
+// DBの区分コード（1=往復、2=片道）を画面表示用の型に変換する
 const toTripType = (value: string | number): "往復" | "片道" =>
   String(value) === "1" ? "往復" : "片道";
 
-const getEmpIdFromQuery = (value: unknown): string => {
-  if (typeof value !== "string") {
-    return DEFAULT_EMP_ID;
-  }
-
-  const trimmed = value.trim();
-  return trimmed === "" ? DEFAULT_EMP_ID : trimmed;
-};
-
+// 姓名の列と名の列を連結して氏名文字列を作る
 const toEmployeeName = (params: {
   empLname: string | null;
   empFname: string | null;
@@ -292,43 +305,6 @@ const toEmployeeName = (params: {
 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
-});
-
-app.get("/api/employee-profile", async (req: Request, res: Response) => {
-  const empId = getEmpIdFromQuery(req.query.empId);
-
-  try {
-    const result = await pool.query<EmployeeMasterRow>(
-      `SELECT emp_id, emp_lname, emp_fname
-         FROM "${DB_SCHEMA}"."${EMPLOYEE_MASTER_TABLE}"
-        WHERE emp_id = $1
-        LIMIT 1`,
-      [empId]
-    );
-
-    if (result.rows.length === 0) {
-      res.status(404).json({ message: "社員マスタに対象社員が存在しません。" });
-      return;
-    }
-
-    const row = result.rows[0];
-    const name = toEmployeeName({
-      empLname: row.emp_lname,
-      empFname: row.emp_fname,
-    });
-
-    res.json({
-      empId: row.emp_id,
-      name,
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "社員情報取得中に予期しないエラーが発生しました。";
-
-    res.status(500).json({ message });
-  }
 });
 
 app.post("/api/login", async (req: Request, res: Response) => {
@@ -389,10 +365,57 @@ app.post("/api/login", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/employee-profile", async (req: Request, res: Response) => {
+  const empId = getEmpIdFromQuery(req.query.empId);
+
+  if (!empId) {
+    res.status(400).json({ message: "empId が指定されていません。" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<EmployeeMasterRow>(
+      `SELECT emp_id, emp_lname, emp_fname
+         FROM "${DB_SCHEMA}"."${EMPLOYEE_MASTER_TABLE}"
+        WHERE emp_id = $1
+        LIMIT 1`,
+      [empId]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ message: "社員マスタに対象社員が存在しません。" });
+      return;
+    }
+
+    const row = result.rows[0];
+    const name = toEmployeeName({
+      empLname: row.emp_lname,
+      empFname: row.emp_fname,
+    });
+
+    res.json({
+      empId: row.emp_id,
+      name,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "社員情報取得中に予期しないエラーが発生しました。";
+
+    res.status(500).json({ message });
+  }
+});
+
 app.get("/api/transportation-expenses", async (req: Request, res: Response) => {
   const startDateQuery =
     typeof req.query.startDate === "string" ? req.query.startDate : "";
   const empId = getEmpIdFromQuery(req.query.empId);
+
+  if (!empId) {
+    res.status(400).json({ message: "empId が指定されていません。" });
+    return;
+  }
 
   const baseDate = startDateQuery || new Date().toISOString().slice(0, 10);
   const settleMonth = getSettlementMonth(baseDate);
@@ -415,7 +438,7 @@ app.get("/api/transportation-expenses", async (req: Request, res: Response) => {
 
     const expenses = result.rows.map((row) => ({
       id: Number(row.item_no),
-      date: toYyyyMmDd(row.date),
+      date: toIsoDate(row.date),
       paymentType: toPaymentType(row.payee),
       fromStation: row.from_sta ?? "",
       toStation: row.to_sta ?? "",
@@ -463,26 +486,21 @@ app.post(
       return;
     }
 
-    const invalidRowIndex = expenses.findIndex((expense) =>
-      hasRequiredRegisterFieldsMissing(expense)
-    );
-
-    if (invalidRowIndex >= 0) {
+    if (expenses.some(isMissingRequiredFields)) {
       res.status(400).json({
         message: "区間（乗車駅・降車駅）と金額を入力してください。",
       });
       return;
     }
 
-    const client = await pool.connect();
-    const targetEmpId = empId || DEFAULT_EMP_ID;
     const settleMonth = getSettlementMonth(startDate);
 
     if (!settleMonth) {
       res.status(400).json({ message: "startDate の形式が不正です。" });
-      client.release();
       return;
     }
+
+    const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
@@ -492,7 +510,7 @@ app.post(
         `DELETE FROM "${DB_SCHEMA}"."${TABLE_NAME}"
           WHERE emp_id = $1
             AND settle_month = $2`,
-        [targetEmpId, settleMonth]
+        [empId, settleMonth]
       );
 
       let insertedCount = 0;
@@ -500,23 +518,15 @@ app.post(
       for (const [index, expense] of expenses.entries()) {
         const registerDate = expense.date.trim() === "" ? startDate : expense.date;
 
-        const candidateRow = buildInsertRow({
-          empId: targetEmpId,
+        const insertRow = buildInsertRow({
+          empId,
           settleMonth,
           expense: { ...expense, date: registerDate },
           itemNo: index + 1,
         });
 
-        const statement = buildInsertStatement(candidateRow);
-
-        await client.query(statement);
+        await client.query(buildInsertStatement(insertRow));
         insertedCount += 1;
-      }
-
-      if (insertedCount === 0) {
-        throw new Error(
-          "テーブルのカラム定義と登録データの対応が取れず、登録できませんでした。"
-        );
       }
 
       await client.query("COMMIT");

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { exportToExcel, type Expense } from "../utils/exportUtils";
-import { registerExpenses } from "../utils/registerUtils.ts";
+import { registerExpenses } from "../utils/registerUtils";
 import { fetchExpensesByStartDate } from "../utils/fetchExpensesUtils";
 import { fetchEmployeeProfile } from "../utils/fetchEmployeeUtils";
 
@@ -100,6 +100,7 @@ const formatAmount = (amount: number): string => amount.toLocaleString("ja-JP");
 const formatAmountInput = (amount: number): string =>
   amount === 0 ? "" : amount.toLocaleString("ja-JP");
 
+// 1件でも入力済みの行があるかどうかを確認する
 const hasInputInAnyRow = (expenses: Expense[]): boolean =>
   expenses.some(
     (expense) =>
@@ -110,7 +111,8 @@ const hasInputInAnyRow = (expenses: Expense[]): boolean =>
       expense.remark.trim() !== ""
   );
 
-const hasRequiredRegisterFieldsMissing = (expense: Expense): boolean => {
+// 登録に必要な項目（乗車駅・降車駅・金額）が未入力かどうかを確認する
+const isMissingRequiredFields = (expense: Expense): boolean => {
   const hasFromStation = expense.fromStation.trim() !== "";
   const hasToStation = expense.toStation.trim() !== "";
   const hasAmount = expense.amount > 0;
@@ -118,6 +120,7 @@ const hasRequiredRegisterFieldsMissing = (expense: Expense): boolean => {
   return !hasFromStation || !hasToStation || !hasAmount;
 };
 
+// 2つの明細リストが同一内容かどうかを比較する（不要な再レンダリングを防ぐ）
 const areExpensesEqual = (left: Expense[], right: Expense[]): boolean => {
   if (left.length !== right.length) {
     return false;
@@ -139,6 +142,7 @@ const areExpensesEqual = (left: Expense[], right: Expense[]): boolean => {
   });
 };
 
+// 指定した月が先月より前の場合は参照モード（編集不可）とする
 const isReferenceModeMonth = (dateText: string): boolean => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
     return true;
@@ -164,7 +168,6 @@ const isReferenceModeMonth = (dateText: string): boolean => {
  */
 export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlementReturn => {
   const initialPeriod = getInitialPeriod();
-  const effectiveEmpId = currentEmpId || "0000000003";
 
   // 明細テーブルの行データ
   const [expenses, setExpenses] = useState<Expense[]>([createEmptyExpense(1)]);
@@ -184,11 +187,13 @@ export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlement
   const [name, setName] = useState<string>("");
   const loadRequestIdRef = useRef(0);
 
+  // 指定した開始日の月に紐づく明細をAPIから取得して画面に反映する
+  // 複数の非同期呼び出しが重なった場合は最新のもの以外を破棄する
   const loadExpensesByStartDate = async (targetStartDate: string) => {
     const requestId = ++loadRequestIdRef.current;
 
     try {
-      const monthlyExpenses = await fetchExpensesByStartDate(targetStartDate, effectiveEmpId);
+      const monthlyExpenses = await fetchExpensesByStartDate(targetStartDate, currentEmpId);
 
       if (requestId !== loadRequestIdRef.current) {
         return;
@@ -217,7 +222,7 @@ export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlement
     // 初期表示時に、固定emp_idの氏名と当月明細を読み込む
     const loadInitialData = async () => {
       try {
-        const profile = await fetchEmployeeProfile(effectiveEmpId);
+        const profile = await fetchEmployeeProfile(currentEmpId);
 
         if (cancelled) {
           return;
@@ -235,6 +240,8 @@ export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlement
     return () => {
       cancelled = true;
     };
+  // マウント時の1回のみ実行するため依存配列は意図的に空にしている
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 開始日変更時に、その日の属する月データを再取得する
@@ -293,6 +300,7 @@ export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlement
     });
   };
 
+  // 登録ボタン押下時の処理。バリデーション後に確認ダイアログを表示し、OKならDBへ登録する
   const handleRegisterConfirm = () => {
     if (!name.trim()) {
       setDialog({
@@ -316,16 +324,10 @@ export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlement
       return;
     }
 
-    const invalidRowIndex = expenses.findIndex((expense) =>
-      hasRequiredRegisterFieldsMissing(expense)
-    );
+    const invalidExpenses = expenses.filter(isMissingRequiredFields);
 
-    if (invalidRowIndex >= 0) {
-      setInvalidExpenseIds(
-        expenses
-          .filter((expense) => hasRequiredRegisterFieldsMissing(expense))
-          .map((expense) => expense.id)
-      );
+    if (invalidExpenses.length > 0) {
+      setInvalidExpenseIds(invalidExpenses.map((expense) => expense.id));
       setDialog({
         isOpen: true,
         title: "入力エラー",
@@ -346,10 +348,8 @@ export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlement
           await registerExpenses({
             expenses,
             startDate,
-            endDate,
             name,
-            empId: effectiveEmpId,
-            totalAmount,
+            empId: currentEmpId,
           });
           setDialog({
             isOpen: true,
@@ -376,6 +376,7 @@ export const useExpenseSettlement = (currentEmpId: string): UseExpenseSettlement
     });
   };
 
+  // 出力ボタン押下時の処理。氏名チェック後に確認ダイアログを表示し、OKならExcelを出力する
   const handleExportConfirm = () => {
     // ファイル出力前に氏名の入力をチェックする
     if (!name.trim()) {

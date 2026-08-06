@@ -1,18 +1,22 @@
+/**
+ * 交通費明細をDBへ登録するAPIを呼び出すユーティリティ
+ */
 import type { Expense } from "./exportUtils";
 
+// 登録APIに送るリクエストの型
 type RegisterExpensesRequest = {
   expenses: Expense[];
   startDate: string;
-  endDate: string;
   name: string;
   empId: string;
-  totalAmount: number;
 };
 
+// 登録APIのレスポンスの型
 type RegisterExpensesResponse = {
   insertedCount: number;
 };
 
+// 明細リストをAPIへPOSTしてDBに登録する
 export const registerExpenses = async (
   payload: RegisterExpensesRequest
 ): Promise<RegisterExpensesResponse> => {

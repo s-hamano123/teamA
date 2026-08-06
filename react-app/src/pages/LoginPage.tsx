@@ -1,18 +1,18 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 
 type LoginPageProps = {
   onLoginSuccess: (empId: string) => void
 }
 
-const loginErrorMessage = 'ユーザーIDまたはパスワードが違います。'
+const LOGIN_ERROR_MESSAGE = 'ユーザーIDまたはパスワードが違います。'
 
-export function LoginPage({ onLoginSuccess }: LoginPageProps) {
+export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     setError('')
@@ -35,13 +35,13 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
         | null
 
       if (!response.ok) {
-        setError(loginErrorMessage)
+        setError(LOGIN_ERROR_MESSAGE)
         return
       }
 
       onLoginSuccess(body?.empId ?? '')
     } catch {
-      setError(loginErrorMessage)
+      setError(LOGIN_ERROR_MESSAGE)
     } finally {
       setIsLoading(false)
     }

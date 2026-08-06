@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 
 /**
  * 精算期間と氏名を入力するヘッダー部分のファイル
@@ -13,6 +13,7 @@ type SettlementHeaderProps = {
   onStartDateChange: (value: string) => void;
 };
 
+// 年と月が有効な値かどうかを検証する
 const isValidYearMonth = (year: string, month: string): boolean => {
   if (!/^\d{4}$/.test(year)) {
     return false;
@@ -26,6 +27,7 @@ const isValidYearMonth = (year: string, month: string): boolean => {
   return mm >= 1 && mm <= 12;
 };
 
+// YYYY-MM-DD 形式の文字列から年と月を抽出する
 const parseYearMonth = (dateText: string): { year: string; month: string } => ({
   year: dateText.slice(0, 4),
   month: dateText.slice(5, 7),
@@ -39,16 +41,20 @@ export const SettlementHeader = ({
   name,
   onStartDateChange,
 }: SettlementHeaderProps) => {
-  const [year, setYear] = useState("");
-  const [month, setMonth] = useState("");
+  const [year, setYear] = useState(parseYearMonth(startDate).year);
+  const [month, setMonth] = useState(parseYearMonth(startDate).month);
+  const [syncedDate, setSyncedDate] = useState(startDate);
   const monthPickerRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const start = parseYearMonth(startDate);
-    setYear(start.year);
-    setMonth(start.month);
-  }, [startDate]);
+  // startDate が外部から変わったとき、入力欄をレンダリング中に同期する
+  if (startDate !== syncedDate) {
+    const parsed = parseYearMonth(startDate);
+    setSyncedDate(startDate);
+    setYear(parsed.year);
+    setMonth(parsed.month);
+  }
 
+  // 年・月の入力をバリデーションし、正常なら親コンポーネントへ通知する
   const commitPeriod = () => {
     if (!isValidYearMonth(year, month)) {
       const start = parseYearMonth(startDate);
@@ -61,6 +67,7 @@ export const SettlementHeader = ({
     onStartDateChange(`${year}-${mm}-01`);
   };
 
+  // Enter キーで確定、Alt+↓ または F4 でカレンダーを開く
   const handlePeriodKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       commitPeriod();
@@ -74,11 +81,13 @@ export const SettlementHeader = ({
     }
   };
 
+  // 非表示の month ピッカーを開いてフォーカスを移す
   const openMonthPicker = () => {
     monthPickerRef.current?.showPicker?.();
     monthPickerRef.current?.focus();
   };
 
+  // カレンダーから月を選択したときに年・月テキスト入力と startDate を同期する
   const handleMonthPickerChange = (value: string) => {
     if (!/^\d{4}-\d{2}$/.test(value)) {
       return;
